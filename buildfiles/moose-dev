@@ -1,0 +1,103 @@
+# vim: set ft=sh:
+pkgname=moose
+pkgver=dev
+pkgurl=https://github.com/idaholab/moose.git
+
+module load openmpi
+module load hdf5
+module load petsc
+module load boost
+
+apply_patch()
+{
+  # we use this to download libmesh
+  git_dir=`git rev-parse --show-cdup 2>/dev/null`
+  if [[ $? == 0 && "${git_dir}x" == "x" ]]; then
+    git submodule init
+    git submodule update
+  fi
+  # compile libmesh
+  METHODS=${METHODS:="opt oprof dbg"}
+  if ! [[ -d libmesh/build ]]; then
+    mkdir libmesh/build
+  fi
+  pushd libmesh/build
+  ../configure \
+    --with-methods="${METHODS}" \
+    --prefix=$destdir \
+    --enable-silent-rules \
+    --enable-unique-id \
+    --disable-warnings \
+    --disable-cxx11 \
+    --enable-unique-ptr
+  popd
+}
+
+unset PETSC_DIR
+unset PETSC_ARCH
+module load openmpi
+module load suitesparse
+module load metis
+module load parmetis
+module load hwloc
+module load scotch
+module load hdf5
+module load superlu
+module load superlu_dist
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./configure \
+    --prefix=$destdir \
+    --with-debugging=no \
+    --with-shared-libraries=yes \
+    --with-suitesparse=1 \
+    --with-suitesparse-dir=$SUITESPARSE_DIR \
+    --with-hwloc=1 \
+    --with-hwloc-dir=$HWLOC_DIR \
+    --with-metis=1 \
+    --with-metis-dir=$METIS_DIR \
+    --with-parmetis=1 \
+    --with-parmetis-dir=$PARMETIS_DIR \
+    --with-scotch=1 \
+    --with-scotch-dir=$SCOTCH_DIR \
+    --with-ptscotch=1 \
+    --with-ptscotch-dir=$SCOTCH_DIR \
+    --with-hdf5=1 \
+    --with-hdf5-dir=$HDF5_DIR \
+    --with-superlu=1 \
+    --with-superlu-lib=$SUPERLU_DIR/lib/libsuperlu.a \
+    --with-superlu-include=$SUPERLU_DIR/include \
+    --with-superlu_dist=1 \
+    --with-superlu_dist-lib=$SUPERLUDIST_DIR/lib/libsuperlu_dist.a \
+    --with-superlu_dist-include=$SUPERLUDIST_DIR/include
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make PETSC_DIR=$PWD PETSC_ARCH=arch-darwin-c-opt all
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $tmpdir/$srcdir
+  make PETSC_DIR=$PWD PETSC_ARCH=arch-darwin-c-opt install
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set PETSC_DIR $REPO/opt/petsc-$pkgver
+setenv PETSC_DIR \$PETSC_DIR
+
+prepend-path PATH \$PETSC_DIR/bin
+prepend-path DYLD_LIBRARY_PATH \$PETSC_DIR/lib
+prepend-path PKG_CONFIG_PATH \$PETSC_DIR/lib/pkgconfig
+EOT)
+

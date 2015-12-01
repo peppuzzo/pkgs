@@ -1,0 +1,11 @@
+# vim: set ft=sh:
+pkgname=szip
+pkgver=2.1
+baseurl=https://www.hdfgroup.org/ftp/lib-external/szip/${pkgver}/src
+pkgurl=${baseurl}/szip-${pkgver}.tar.gz
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SZIP_DIR $REPO/opt/szip-$pkgver
+setenv SZIP_DIR \$SZIP_DIR
+EOT)

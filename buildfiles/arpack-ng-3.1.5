@@ -1,0 +1,20 @@
+# vim: set ft=sh:
+pkgname=arpack-ng
+pkgver=3.1.5
+pkgurl=https://github.com/opencollab/arpack-ng/archive/${pkgver}.tar.gz
+
+module load pkg-config
+module load gcc
+module load openmpi
+export MPILIBS="`pkg-config --libs ompi-f77` "
+export MPIF77=mpif77
+
+confopts="--enable-mpi --disable-dependency-tracking"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set ARPACK_DIR $REPO/opt/$pkgname-$pkgver
+setenv ARPACK_DIR \$ARPACK_DIR
+
+prepend-path PATH \$ARPACK_DIR/bin
+EOT)

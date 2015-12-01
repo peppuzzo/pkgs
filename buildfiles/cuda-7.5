@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+pkgname=cuda
+pkgver=7.5
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set CUDA_DIR /Developer/NVIDIA/CUDA-${pkgver}
+setenv CUDA_DIR \$CUDA_DIR
+
+prepend-path PATH \$CUDA_DIR/bin
+prepend-path DYLD_LIBRARY_PATH \$CUDA_DIR/lib
+EOT)
+
+prepare() { :; }
+configure() { :; }
+build() { :; }
+package() { :; }

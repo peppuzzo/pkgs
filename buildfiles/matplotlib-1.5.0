@@ -1,0 +1,94 @@
+# vim: set ft=sh:
+pkgname=matplotlib
+pkgver=1.5.0
+
+module load pkg-config
+module load freetype
+module load libpng
+module load cython
+module load gcc
+module load numpy
+module load scipy
+
+prepare() { :; }
+configure() { :; }
+build() { :; }
+package()
+{
+  rm -rf $tmpdir/*
+  pushd $tmpdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+  # six
+  curl -O -L https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz
+  tar xvfz six-1.10.0.tar.gz
+  pushd six-1.10.0
+  python setup.py install --prefix=$destdir
+  popd
+  # pytz
+  curl -O -L https://pypi.python.org/packages/source/p/pytz/pytz-2015.7.tar.gz
+  tar xvfz pytz-2015.7.tar.gz
+  pushd pytz-2015.7
+  python setup.py install --prefix=$destdir
+  popd
+  # python-dateutil
+  curl -O -L https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-2.4.2.tar.gz
+  tar xvfz python-dateutil-2.4.2.tar.gz
+  pushd python-dateutil-2.4.2
+  python setup.py install --prefix=$destdir
+  popd
+  # pyparsing
+  curl -O -L https://pypi.python.org/packages/source/p/pyparsing/pyparsing-2.0.6.tar.gz
+  tar xvfz pyparsing-2.0.6.tar.gz
+  pushd pyparsing-2.0.6
+  python setup.py install --prefix=$destdir
+  popd
+  # cycler
+  curl -O -L https://pypi.python.org/packages/source/C/Cycler/cycler-0.9.0.tar.gz
+  tar xfvz cycler-0.9.0.tar.gz
+  pushd cycler-0.9.0
+  python setup.py install --prefix=$destdir
+  popd
+  # backports_abc
+  curl -O -L https://pypi.python.org/packages/source/b/backports_abc/backports_abc-0.4.tar.gz
+  tar xvfz backports_abc-0.4.tar.gz
+  pushd backports_abc-0.4
+  python setup.py install --prefix=$destdir
+  popd
+  # certifi
+  curl -O -L https://pypi.python.org/packages/source/c/certifi/certifi-2015.11.20.tar.gz
+  tar xvfz certifi-2015.11.20.tar.gz
+  pushd certifi-2015.11.20
+  python setup.py install --prefix=$destdir
+  popd
+  # tornado
+  curl -O -L https://pypi.python.org/packages/source/t/tornado/tornado-4.3.tar.gz
+  tar xvfz tornado-4.3.tar.gz
+  pushd tornado-4.3
+  python setup.py install --prefix=$destdir
+  popd
+  # matplotlib
+  curl -O -L https://pypi.python.org/packages/source/m/matplotlib/matplotlib-1.5.0.tar.gz
+  tar xvfz matplotlib-1.5.0.tar.gz
+  pushd matplotlib-1.5.0
+  python setup.py build
+  python setup.py install --prefix=$destdir
+  popd
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load freetype
+module load gcc
+module load numpy
+module load scipy
+module load freetype
+module load libpng
+
+set MATPLOTLIB_DIR $REPO/opt/matplotlib-$pkgver
+setenv MATPLOTLIB_DIR \$MATPLOTLIB_DIR
+
+prepend-path PYTHONPATH \$MATPLOTLIB_DIR/lib/python2.7/site-packages
+EOT)

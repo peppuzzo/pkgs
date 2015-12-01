@@ -1,0 +1,81 @@
+# vim: set ft=sh:
+pkgname=suitesparse
+pkgver=4.4.5
+baseurl=http://faculty.cse.tamu.edu/davis/SuiteSparse
+pkgurl=${baseurl}/SuiteSparse-${pkgver}.tar.gz
+srcdir=Suitesparse
+
+module load metis
+
+apply_patch()
+{
+  # METIS 5.x
+  patch -Np1 -i $REPO/buildfiles/suitesparse-metis5.patch
+  patch -Np1 -i $REPO/buildfiles/suitesparse-metis_path.patch
+}
+
+configure() { :; }
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make \
+    CFLAGS+=-DNTIMER \
+    BLAS="-framework Accelerate" \
+    LAPACK="-framework Accelerate" \
+    LIB=-lm \
+    METIS_PATH=${METIS_DIR} \
+    METIS= \
+    library
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $tmpdir/$srcdir
+  mkdir -pv $destdir/{include,lib}
+  make \
+    INSTALL_LIB=$destdir/lib \
+    INSTALL_INCLUDE=$destdir/include \
+    install
+  popd
+}
+
+post_package()
+{
+  # shared libraries
+  pushd $destdir/lib
+  LINK=cc
+  make_shlib libsuitesparseconfig.a 4.4.5
+  make_shlib libamd.a 2.4.1 -lm -L. -lsuitesparseconfig
+  make_shlib libcolamd.a 2.9.1 -lm -L. -lsuitesparseconfig
+  make_shlib libccolamd.a 2.9.1 -lm -L. -lsuitesparseconfig
+  make_shlib libcamd.a 2.4.1 -lm -L. -lsuitesparseconfig
+  make_shlib libcholmod.a 3.0.6 -lm -L. -lsuitesparseconfig \
+    -lamd -lcolamd -lccolamd -lcamd \
+    -framework Accelerate \
+    -L$METIS_DIR/lib -lmetis
+  make_shlib libumfpack.a 5.7.1 -lm -L. -lsuitesparseconfig \
+    -framework Accelerate \
+    -lcholmod -lamd
+  make_shlib libbtf.a 1.2.1 -lm -L. -lsuitesparseconfig
+  make_shlib libcxsparse.a 3.1.4 -lm -L. -lsuitesparseconfig
+  make_shlib libklu.a 1.3.3 -lm -L. -lsuitesparseconfig \
+    -lamd -lbtf -lcolamd
+  make_shlib librbio.a 2.2.1 -lm -L. -lsuitesparseconfig
+  make_shlib libldl.a 2.2.1 -lm -L. -lsuitesparseconfig
+  LINK=c++
+  make_shlib libspqr.a 2.0.1 -lm -L. -lsuitesparseconfig \
+    -framework Accelerate \
+    -lcholmod
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SUITESPARSE_DIR $REPO/opt/suitesparse-$pkgver
+setenv SUITESPARSE_DIR \$SUITESPARSE_DIR
+EOT)

@@ -1,0 +1,21 @@
+# vim: set ft=sh:
+pkgname=libxml2
+pkgver=2.9.2
+pkgurl=http://xmlsoft.org/sources/libxml2-${pkgver}.tar.gz
+_destdir=$REPO/opt/$pkgname-$pkgver
+
+module load python
+confopts="--with-python-install-dir=${_destdir}/lib/python2.7/site-packages"
+
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load python
+set LIBXML2_DIR $_destdir
+setenv LIBXML2_DIR \$LIBXML2_DIR
+
+prepend-path PATH \$LIBXML2_DIR/bin
+prepend-path MANPATH \$LIBXML2_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$LIBXML2_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$LIBXML2_DIR/lib/python2.7/site-packages
+EOT)

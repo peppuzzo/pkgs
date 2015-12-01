@@ -1,0 +1,29 @@
+# vim: set ft=sh:
+pkgname=cairo
+pkgver=1.14.4
+pkgurl=http://cairographics.org/releases/cairo-${pkgver}.tar.xz
+
+module load pkg-config
+module load libxml2
+module load libpng
+module load freetype
+module load pixman
+
+# NOTE out-of-source compilation does not work, since
+# build directory already present
+tmpdir=$REPO/src/$pkgname-$pkgver
+srcdir=$pkgname-$pkgver
+builddir=$tmpdir/$srcdir/mybuild
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load libxml2
+module load freetype
+module load libpng
+module load pixman
+set CAIRO_DIR $REPO/opt/cairo-$pkgver
+setenv CAIRO_DIR \$CAIRO_DIR
+
+prepend-path PATH \$CAIRO_DIR/bin
+prepend-path PKG_CONFIG_PATH \$CAIRO_DIR/lib/pkgconfig
+EOT)

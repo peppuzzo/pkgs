@@ -1,0 +1,51 @@
+# vim: set ft=sh:
+pkgname=gcc
+pkgver=5.2.0
+pkgurl=http://ftpmirror.gnu.org/gcc/gcc-${pkgver}/gcc-${pkgver}.tar.bz2
+
+module load gmp
+module load mpfr
+module load libmpc
+module load isl
+
+confopts="--enable-languages=c,c++,fortran"
+confopts+=" --with-system-zlib"
+confopts+=" --enable-libstdcxx-time=yes"
+confopts+=" --enable-checking=release"
+confopts+=" --enable-lto"
+confopts+=" --enable-plugin"
+confopts+=" --disable-nls"
+confopts+=" --disable-multilib"
+confopts+=" --with-gmp=$GMP_DIR"
+confopts+=" --with-mpfr=$MPFR_DIR"
+confopts+=" --with-mpc=$LIBMPC_DIR"
+confopts+=" --with-isl=$ISL_DIR"
+confopts+=" --program-suffix=-${pkgver}"
+
+build()
+{
+  pushd $builddir
+  make -j9 bootstrap
+  popd
+}
+
+post_package()
+{
+  pushd $destdir/bin
+  ln -svf gfortran-${pkgver} gfortran
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gmp
+module load mpfr
+module load libmpc
+module load isl
+set GCC_DIR $REPO/opt/gcc-$pkgver
+setenv GCC_DIR \$GCC_DIR
+
+prepend-path PATH \$GCC_DIR/bin
+prepend-path MANPATH \$GCC_DIR/share/man
+prepend-path INFOPATH \$GCC_DIR/share/info
+EOT)

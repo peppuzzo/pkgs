@@ -1,0 +1,27 @@
+# vim: set ft=sh:
+pkgname=sympy
+pkgver=0.7.6.1
+pkgurl=https://pypi.python.org/packages/source/s/sympy/sympy-0.7.6.1.tar.gz
+
+module load cython
+module load gcc
+module load numpy
+
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gcc
+module load numpy
+set SYMPY_DIR $REPO/opt/sympy-$pkgver
+
+prepend-path PYTHONPATH \$SYMPY_DIR/lib/python2.7/site-packages
+EOT)

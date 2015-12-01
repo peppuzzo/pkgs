@@ -1,0 +1,100 @@
+# vim: filetype=sh
+pkgname=scotch
+pkgver=6.0.4
+baseurl=http://gforge.inria.fr/frs/download.php/file/34618
+pkgurl=${baseurl}/scotch_${pkgver}.tar.gz
+srcdir=scotch_${pkgver}/src
+
+module load openmpi
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load openmpi
+set SCOTCH_DIR $REPO/opt/scotch-$pkgver
+setenv SCOTCH_DIR \$SCOTCH_DIR
+EOT)
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  cat <<EOF > Makefile.inc
+EXE =
+LIB = .a
+OBJ = .o
+MAKE = make
+AR = ar
+ARFLAGS = cr
+CAT = cat
+CCS = cc
+CCP = mpicc
+CCD = mpicc
+PTHREAD ?=
+CFLAGS  = -O3 -Drestrict=__restrict
+CFLAGS += -DCOMMON_FILE_COMPRESS_GZ
+CFLAGS += -DCOMMON_PTHREAD -DCOMMON_PTHREAD_BARRIER
+CFLAGS += -DCOMMON_RANDOM_FIXED_SEED -DCOMMON_TIMING_OLD
+CFLAGS += \$(PTHREAD) -DSCOTCH_RENAME
+CLIBFLAGS = -fPIC
+LDFLAGS = -lm -lz
+CP = cp
+LEX = flex -Pscotchyy -olex.yy.c
+LN = ln
+MKDIR = mkdir -p
+MV = mv
+RANLIB = echo
+YACC = bison -pscotchyy -y -b y
+EOF
+  make clean
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make PTHREAD=-DSCOTCH_PTHREAD scotch
+  make PTHREAD=-DSCOTCH_PTHREAD esmumps
+  make PTHREAD= ptscotch
+  make PTHREAD= ptesmumps
+  popd
+}
+
+testing()
+{
+  pushd $tmpdir/$srcdir
+  make PTHREAD=-DSCOTCH_PTHREAD check
+  make PTHREAD= ptcheck
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  for dir in {bin,lib,include}; do
+    install -d $destdir/$dir
+    install -m 755 $tmpdir/$srcdir/../$dir/* $destdir/$dir
+  done
+  rm $destdir/{include,lib}/*metis*
+}
+
+post_package()
+{
+  # shared libs
+  pushd $destdir/lib
+  export LINK=cc
+  make_shlib libscotcherr.a ${pkgver}
+  make_shlib libscotcherrexit.a ${pkgver}
+  make_shlib libscotch.a ${pkgver} \
+    -lz -lm -L. -lscotcherr
+  make_shlib libesmumps.a ${pkgver} \
+    -L. -lscotcherr -lscotch
+  export LINK=mpicc
+  make_shlib libptscotcherr.a ${pkgver}
+  make_shlib libptscotcherrexit.a ${pkgver}
+  make_shlib libptscotch.a ${pkgver} \
+    -lz -lm -L. -lscotch -lptscotcherr
+  make_shlib libptesmumps.a ${pkgver} \
+    -L. -lscotch -lptscotcherr -lptscotch
+  popd
+}

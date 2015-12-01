@@ -1,0 +1,28 @@
+# vim: set ft=sh:
+pkgname=numpy
+pkgver=1.10.1
+pkgurl=https://pypi.python.org/packages/source/n/numpy/numpy-1.10.1.tar.gz
+
+module load python
+module load gcc
+
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gcc
+module load python
+set NUMPY_DIR $REPO/opt/numpy-$pkgver
+setenv NUMPY_DIR \$NUMPY_DIR
+
+prepend-path PATH \$NUMPY_DIR/bin
+prepend-path PYTHONPATH \$NUMPY_DIR/lib/python2.7/site-packages
+EOT)

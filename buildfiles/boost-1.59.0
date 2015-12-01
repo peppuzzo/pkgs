@@ -1,0 +1,48 @@
+# vim: set ft=sh:
+pkgname=boost
+pkgver=1.59.0
+_baseurl=https://downloads.sourceforge.net/project/boost/boost
+pkgurl=${_baseurl}/$pkgver/boost_${pkgver//./_}.tar.bz2
+srcdir=boost_${pkgver//./_}
+
+apply_patch()
+{
+  curl -O -L https://gist.githubusercontent.com/tdsmith/bc76ddea1e2bdb2a3a18/raw/03d125b12a4b03c28ee011a2d6d42a8137061a3b/boost-log.patch
+  curl -O -L https://gist.githubusercontent.com/autosquid/a4974e112b754e03aad7/raw/985358f8909033eb7ad9aae8fbf60881ef70a275/boost-log_setup.patch
+  patch -p1 < boost-log.patch
+  patch -p1 < boost-log_setup.patch
+}
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./bootstrap.sh \
+    --prefix=$destdir \
+    --libdir=$destdir/lib \
+    --without-icu \
+    --without-libraries=python,log,mpi
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  ./b2 headers
+  ./b2 --prefix=$destdir \
+    --libdir=$destdir/lib \
+    -d2 \
+    -j8 \
+    --layout=tagged \
+    install
+  popd
+}
+
+package() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set BOOST_DIR $REPO/opt/boost-$pkgver
+setenv BOOST_DIR \$BOOST_DIR
+
+prepend-path PATH \$BOOST_DIR/bin
+EOT)

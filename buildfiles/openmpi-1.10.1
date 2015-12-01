@@ -1,0 +1,27 @@
+# vim: set ft=sh:
+pkgname=openmpi
+pkgver=1.10.1
+baseurl=https://www.open-mpi.org/software/ompi/v1.10/downloads
+pkgurl=${baseurl}/openmpi-${pkgver}.tar.bz2
+
+module load pkg-config
+module load gcc
+module load hwloc
+module load libxml2
+export MAKE_NUMJOBS=8
+
+confopts=" --enable-mpi-fortran=all --with-hwloc=$HWLOC_DIR"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gcc
+module load hwloc
+module load libxml2
+set OPENMPI_DIR $REPO/opt/openmpi-$pkgver
+setenv OPENMPI_DIR \$OPENMPI_DIR
+
+prepend-path PATH \$OPENMPI_DIR/bin
+prepend-path MANPATH \$OPENMPI_DIR/share/man
+prepend-path INFOPATH \$OPENMPI_DIR/share/info
+prepend-path PKG_CONFIG_PATH \$OPENMPI_DIR/lib/pkgconfig
+EOT)

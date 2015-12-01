@@ -1,0 +1,40 @@
+# vim: set ft=sh:
+pkgname=openssl
+pkgver=1.0.2d
+pkgurl=https://www.openssl.org/source/openssl-${pkgver}.tar.gz
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./Configure darwin64-x86_64-cc \
+    --prefix=$destdir \
+    no-ssl2 zlib-dynamic shared \
+    enable-cms \
+    enable-ec_nistp_64_gcc_128
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make depend
+  make
+  popd
+}
+
+package()
+{
+  pushd $tmpdir/$srcdir
+  make install MANDIR=$destdir/share/man MANSUFFIX=ssl
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set OPENSSL_DIR $REPO/opt/openssl-$pkgver
+setenv OPENSSL_DIR \$OPENSSL_DIR
+
+prepend-path PATH \$OPENSSL_DIR/bin
+prepend-path PKG_CONFIG_PATH \$OPENSSL_DIR/lib/pkgconfig
+prepend-path MANPATH \$OPENSSL_DIR/share/man
+EOT)

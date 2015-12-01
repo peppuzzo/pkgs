@@ -1,0 +1,16 @@
+# vim: set ft=sh:
+pkgname=pkg-config
+pkgver=0.29
+_baseurl=http://pkgconfig.freedesktop.org/releases
+pkgurl=${_baseurl}/pkg-config-${pkgver}.tar.gz
+LDFLAGS="-framework Foundation -framework Cocoa"
+export LDFLAGS
+confopts="--with-internal-glib --disable-host-tool"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set rootdir $REPO/opt/pkg-config-$pkgver
+
+prepend-path PATH \$rootdir/bin
+prepend-path MANPATH \$rootdir/share/man
+EOT)

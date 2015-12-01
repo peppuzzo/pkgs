@@ -1,0 +1,16 @@
+# vim: set ft=sh:
+pkgname=automake
+pkgver=1.15
+pkgurl=http://ftpmirror.gnu.org/automake/automake-${pkgver}.tar.xz
+
+module load autoconf
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load autoconf
+set AUTOMAKE_DIR $REPO/opt/automake-$pkgver
+
+prepend-path PATH \$AUTOMAKE_DIR/bin
+prepend-path MANPATH \$AUTOMAKE_DIR/share/man
+prepend-path INFOPATH \$AUTOMAKE_DIR/share/info
+EOT)

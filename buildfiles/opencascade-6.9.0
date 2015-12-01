@@ -1,0 +1,45 @@
+# vim: set ft=sh:
+pkgname=opencascade
+pkgver=6.9.0
+pkgurl=http://files.opencascade.com/OCCT/OCC_${pkgver}_release/$pkgname-${pkgver}.tgz
+destdir=$REPO/opt/$pkgname-$pkgver
+
+export USE_CMAKE=1
+export MAKE_NUMJOBS=8
+
+module load cmake
+module load freetype
+
+confopts=$(cat <<-EOT
+-D INSTALL_DIR:PATH=$destdir
+-D INSTALL_TESTS:BOOL=OFF
+-D FRAMEWORKS_APPKIT:PATH=/System/Library/Frameworks/AppKit.framework
+-D CMAKE_PREFIX_PATH:PATH=$destdir
+-D CMAKE_INCLUDE_PATH:PATH=$destdir/lib
+-D CMAKE_FRAMEWORK_PATH:PATH=$destdir/Frameworks
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+EOT)
+
+post_package()
+{
+  pushd $destdir
+  ln -sfv mac64/clang/lib lib
+  ln -sfv mac64/clang/bin bin
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load freetype
+
+set OCC_DIR $REPO/opt/$pkgname-$pkgver
+set CASROOT $REPO/opt/$pkgname-$pkgver
+set OCC_SYS_NAME mac64/clang
+setenv OCC_DIR \$OCC_DIR
+setenv CASROOT \$CASROOT
+
+prepend-path PATH \$OCC_DIR/\$OCC_SYS_NAME/bin
+prepend-path DYLD_LIBRARY_PATH \$OCC_DIR/\$OCC_SYS_NAME/lib
+EOT)

@@ -1,0 +1,57 @@
+# vim: set ft=sh:
+pkgname=python
+pkgver=2.7.10
+pkgurl=https://www.python.org/ftp/python/${pkgver}/Python-${pkgver}.tgz
+srcdir=Python-${pkgver}
+destdir=$REPO/opt/$pkgname-$pkgver
+
+unset PYTHONHOME
+unset PYTHONPATH
+module load readline
+module load openssl
+
+apply_patch()
+{
+  curl -O -L https://bugs.python.org/file40479/xcode-stubs-2.7.patch
+  curl -O -L https://bugs.python.org/file30805/issue10910-workaround.txt
+  patch -p1 < xcode-stubs-2.7.patch
+  patch -p1 < issue10910-workaround.txt
+}
+
+export MACOSX_DEPLOYMENT_TARGET=10.11
+export CFLAGS="$CFLAGS -I$READLINE_DIR/include -I$OPENSSL_DIR/include"
+export LDFLAGS="$LDFLAGS -L$READLINE_DIR/lib -L$OPENSSL_DIR/lib"
+confopts="--enable-ipv6 --with-ensurepip --enable-framework=$destdir/Frameworks"
+
+testing()
+{
+  pushd $builddir
+  make quicktest
+  popd
+}
+
+package()
+{
+  pushd $builddir
+  make install PYTHONAPPSDIR=$destdir
+  popd
+}
+
+post_package()
+{
+  $destdir/bin/pip install -U pip
+  $destdir/bin/pip install -U setuptools
+  $destdir/bin/pip install wheel
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load readline
+module load openssl
+set PYTHON_DIR $destdir
+setenv PYTHON_DIR \$PYTHON_DIR
+
+prepend-path PATH \$PYTHON_DIR/bin
+prepend-path PKG_CONFIG_PATH \$PYTHON_DIR/Frameworks/Python.framework/Versions/2.7/lib/pkgconfig
+prepend-path MANPATH \$PYTHON_DIR/Frameworks/Python.framework/Versions/2.7/share/man
+EOT)

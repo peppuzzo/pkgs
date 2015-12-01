@@ -1,0 +1,24 @@
+# vim: set ft=sh:
+pkgname=scalapack
+pkgver=2.0.2
+pkgurl=http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
+destdir=$REPO/opt/$pkgname-$pkgver
+
+export USE_CMAKE=1
+module load cmake
+module load gcc
+module load openmpi
+confopts=$(cat <<-EOT
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+EOT)
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gcc
+module load openmpi
+set SCALAPACK_DIR $REPO/opt/scalapack-$pkgver
+setenv SCALAPACK_DIR \$SCALAPACK_DIR
+EOT)

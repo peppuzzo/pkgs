@@ -1,0 +1,14 @@
+# vim: set ft=sh:
+pkgname=libpng
+pkgver=1.6.19
+pkgurl=ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-${pkgver}.tar.xz
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set LIBPNG_DIR $REPO/opt/libpng-$pkgver
+setenv LIBPNG_DIR \$LIBPNG_DIR
+
+prepend-path PATH \$LIBPNG_DIR/bin
+prepend-path MANPATH \$LIBPNG_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$LIBPNG_DIR/lib/pkgconfig
+EOT)

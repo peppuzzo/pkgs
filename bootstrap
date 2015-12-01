@@ -1,0 +1,33 @@
+#!/bin/bash -e
+modulever=3.2.10
+REPO=$PWD
+
+# directory skeleton
+mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
+# build modules
+pushd src
+_baseurl=https://downloads.sourceforge.net/project/modules/Modules
+moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
+if [ !-f "modules-${modulever}.tar.bz2" ]; then
+  curl -O -L modules-${modulever}.tar.bz2
+fi
+if [ -d "modules-${modulever}" ]; then
+  rm -rvf modules-${modulever}
+fi
+tar xvfj modules-${modulever}.tar.bz2
+cd modules-${modulever}
+mkdir build
+cd build
+../configure \
+  --prefix=$REPO/modules \
+  --with-module-path=$REPO/modules/${modulever}/modulefiles \
+  --with-version-path=$REPO/modules/versions \
+  CPPFLAGS=-DUSE_INTERP_ERRORLINE
+make install
+popd
+# cleanup
+rm -rf $REPO/src/modules-${modulever}
+
+# private modules
+source $REPO/modules/Modules/${modulever}/init/zsh
+cp ${MODULESHOME}/modulefiles/null $REPO/modulefiles

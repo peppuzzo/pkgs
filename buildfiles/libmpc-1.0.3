@@ -1,0 +1,19 @@
+# vim: set ft=sh:
+pkgname=libmpc
+pkgver=1.0.3
+pkgurl=http://ftpmirror.gnu.org/mpc/mpc-${pkgver}.tar.gz
+srcdir=mpc-$pkgver
+
+module load gmp
+module load mpfr
+confopts="--with-gmp=$GMP_DIR --with-mpfr=$MPFR_DIR"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load gmp
+module load mpfr
+set LIBMPC_DIR $REPO/opt/libmpc-$pkgver
+setenv LIBMPC_DIR \$LIBMPC_DIR
+
+prepend-path INFOPATH \$LIBMPC_DIR/share/info
+EOT)

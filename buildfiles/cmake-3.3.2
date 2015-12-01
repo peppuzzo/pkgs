@@ -1,0 +1,18 @@
+# vim: set ft=sh:
+pkgname=cmake
+pkgver=3.3.2
+pkgurl=https://www.cmake.org/files/v3.3/cmake-${pkgver}.tar.gz
+
+module load gcc
+
+confopts="--parallel=3"
+confopts+=" --no-system-libs"
+confopts+=" --system-curl --system-zlib --system-bzip2"
+confopts+=" --no-qt-gui"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set CMAKE_DIR $REPO/opt/cmake-$pkgver
+
+prepend-path PATH \$CMAKE_DIR/bin
+EOT)

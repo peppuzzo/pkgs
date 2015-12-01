@@ -1,0 +1,166 @@
+#!/bin/bash -e
+
+make_shlib()
+{
+  local libname=$(basename ${1%.*})
+  local soversion=${2}
+  local compatversion=$(echo ${soversion} | cut -d"." -f1).$(echo ${soversion} | cut -d"." -f2)
+  local soname=${libname}.dylib.${soversion}
+  local sonamemajor=${libname}.dylib.$(echo $soversion | cut -d"." -f1)
+
+  echo "Building ${libname}.dylib ..."
+  shift 2
+
+  ${LINK} ${LDFLAGS} -dynamiclib \
+    -install_name `pwd`/${sonamemajor} \
+    -Wl,-force_load ${libname}.a \
+    -multiply_defined warning \
+    -current_version ${soversion} \
+    -compatibility_version ${compatversion} \
+    "$@" -o ${soname}
+
+  ln -svf ${soname} ${libname}.dylib
+  ln -svf ${soname} ${libname}.dylib.${compatversion}
+  ln -svf ${soname} ${sonamemajor}
+}
+
+apply_patch() { :; }
+
+prepare()
+{
+  # create a tempdir for the source
+  # if not present
+  mkdir -pv $tmpdir && pushd $tmpdir
+  pkgfile=`basename $pkgurl`
+  # check if git repository
+  if [ "${pkgfile##*.}" == "git" ]; then
+    if [ -d $srcdir/.git ]; then
+      pushd $srcdir
+      git rebase
+      popd
+    else
+      git clone $pkgurl $srcdir
+    fi
+  else
+    # standard download
+    if ! [ -f $pkgfile ]; then
+      curl -O -L $pkgurl
+    fi
+    # remove old source dir
+    rm -rf $srcdir
+    # untar
+    bsdtar -xf $pkgfile
+  fi
+  # apply patches
+  pushd $srcdir
+  apply_patch
+  popd
+  popd
+}
+
+configure()
+{
+  # create a build directory and
+  # run the configure script
+  [[ -d $builddir ]] && rm -rf $builddir
+  mkdir $builddir
+  pushd $builddir
+  # check if cmake or autoconf
+  if [[ ! -z ${USE_CMAKE+x} ]]; then
+    cmake -DCMAKE_INSTALL_PREFIX=$destdir $confopts ../
+  else
+    ../configure --prefix=$destdir $confopts
+  fi
+  popd
+}
+
+build()
+{
+  pushd $builddir
+  make -j$MAKE_NUMJOBS
+  popd
+}
+
+testing()
+{
+  pushd $builddir
+  make check
+  popd
+}
+
+pre_package()
+{
+  #remove old installation
+  if [[ -d $destdir ]]; then
+    rm -rfv $destdir
+  fi
+}
+
+package()
+{
+  pushd $builddir
+  make install
+  popd
+  pushd $destdir
+  if [ -f "share/info/dir" ]; then
+    rm share/info/dir
+  fi
+  popd
+}
+
+feedmodule()
+{
+  echo "$pkgmodule" > $modulefile
+}
+
+post_package() { :; }
+
+# check if repo is set, otherwise we
+# locally set it just for installation
+if [ -z ${REPO+x} ]; then
+  source localenv.conf
+fi
+
+# check if the requested package exists
+pkgsource=$1
+if [ ! -f $pkgsource ]; then
+  echo "'$pkgsource' not found!"
+  exit
+fi
+
+# source the content
+# this will override functions defined here
+source $pkgsource
+
+# define variables
+tmpdir=$REPO/src/$pkgname-$pkgver
+destdir=$REPO/opt/$pkgname-$pkgver
+if [ -z ${srcdir+x} ]; then
+  srcdir=$pkgname-$pkgver
+fi
+if [ -z ${builddir+x} ]; then
+  builddir=$tmpdir/$srcdir/build
+fi
+if [ -z ${MAKE_NUMJOBS+x} ]; then
+  MAKE_NUMJOBS=4
+fi
+modulefile=$REPO/modulefiles/$pkgname/$pkgver
+if [ ! -d `dirname "${modulefile}"` ]; then
+  echo `dirname "${modulefile}"`
+  mkdir -pv `dirname $modulefile`
+fi
+
+if [ "x$2" == "x" ]; then
+  # run all the commands
+  prepare
+  configure
+  build
+  pre_package
+  package
+  post_package
+  feedmodule
+  #testing
+else
+  # run only the requested command
+  "${2}"
+fi

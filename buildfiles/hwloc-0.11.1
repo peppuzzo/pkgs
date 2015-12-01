@@ -1,0 +1,22 @@
+# vim: set ft=sh:
+pkgname=hwloc
+pkgver=1.11.1
+_baseurl=http://www.open-mpi.org/software/hwloc/v1.11/downloads
+pkgurl=${_baseurl}/hwloc-${pkgver}.tar.bz2
+
+module load pkg-config
+module load cairo
+
+#export CFLAGS="-I$CUDA_DIR/include"
+#export LDFLAGS="-L$CUDA_DIR/lib"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load cairo
+set HWLOC_DIR $REPO/opt/hwloc-$pkgver
+setenv HWLOC_DIR \$HWLOC_DIR
+
+prepend-path PATH \$HWLOC_DIR/bin
+prepend-path MANPATH \$HWLOC_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$HWLOC_DIR/lib/pkgconfig
+EOT)

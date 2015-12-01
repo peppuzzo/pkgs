@@ -1,0 +1,28 @@
+# vim: set ft=sh:
+pkgname=mpi4py
+pkgver=dev
+pkgurl=git@bitbucket.org:mpi4py/mpi4py.git
+
+module load openmpi
+module load python
+module load cython
+
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load openmpi
+module load python
+set MPI4PY_DIR $REPO/opt/mpi4py-$pkgver
+setenv MPI4PY_DIR \$MPI4PY_DIR
+
+prepend-path PYTHONPATH \$MPI4PY_DIR/lib/python2.7/site-packages
+EOT)

@@ -1,0 +1,14 @@
+# vim: set ft=sh:
+pkgname=gmp
+pkgver=6.0.0a
+pkgurl=http://ftpmirror.gnu.org/gmp/gmp-${pkgver}.tar.bz2
+srcdir=${pkgname}-6.0.0
+confopts="--enable-cxx"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set GMP_DIR $REPO/opt/gmp-$pkgver
+setenv GMP_DIR \$GMP_DIR
+
+prepend-path INFOPATH \$GMP_DIR/share/info
+EOT)

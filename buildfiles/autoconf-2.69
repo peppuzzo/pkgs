@@ -1,0 +1,13 @@
+# vim: set ft=sh:
+pkgname=autoconf
+pkgver=2.69
+pkgurl=http://ftpmirror.gnu.org/autoconf/autoconf-${pkgver}.tar.gz
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set AUTOCONF_DIR $REPO/opt/autoconf-$pkgver
+
+prepend-path PATH \$AUTOCONF_DIR/bin
+prepend-path MANPATH \$AUTOCONF_DIR/share/man
+prepend-path INFOPATH \$AUTOCONF_DIR/share/info
+EOT)

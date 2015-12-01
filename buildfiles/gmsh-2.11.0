@@ -1,0 +1,57 @@
+# vim: set ft=sh:
+pkgname=gmsh
+pkgver=2.11.0
+pkgurl=http://www.geuz.org/gmsh/src/gmsh-${pkgver}-source.tgz
+destdir=$REPO/opt/$pkgname-$pkgver
+srcdir=$pkgname-$pkgver-source
+
+export USE_CMAKE=1
+export MAKE_NUMJOBS=8
+
+module load cmake
+module load libpng
+module load libjpeg-turbo
+module load freetype
+module load openmpi
+module load fltk
+module load opencascade
+module load hdf5
+module load petsc
+module load slepc
+
+confopts=$(cat <<-EOT
+-D CMAKE_SYSTEM_PREFIX_PATH=$LIBJPEG_DIR
+-D CMAKE_INSTALL_PREFIX:PATH=$destdir
+-D ENABLE_OS_SPECIFIC_INSTALL:BOOL=OFF
+-D GMSH_BIN:PATH=$destdir/bin
+-D GMSH_LIB:PATH=$destdir/lib
+-D GMSH_DOC:PATH=$destdir/doc
+-D GMSH_MAN:PATH=$destdir/man
+-D ENABLE_NATIVE_FILE_CHOOSER:BOOL=ON
+-D ENABLE_BUILD_LIB:BOOL=ON
+-D ENABLE_BUILD_SHARED:BOOL=ON
+-D ENABLE_FLTK:BOOL=ON
+-D ENABLE_MPI:BOOL=OFF
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+-Wno-dev
+EOT)
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load libpng
+module load libjpeg-turbo
+module load freetype
+module load openmpi
+module load fltk
+module load opencascade
+module load hdf5
+module load petsc
+module load slepc
+
+set GMSH_DIR $REPO/opt/gmsh-$pkgver
+setenv GMSH_DIR \$GMSH_DIR
+
+prepend-path PATH \$GMSH_DIR/bin
+EOT)

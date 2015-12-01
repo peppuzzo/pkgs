@@ -1,0 +1,79 @@
+# vim: set ft=sh:
+pkgname=superlu
+pkgver=4.3
+pkgurl=http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_${pkgver}.tar.gz
+srcdir=SuperLU_$pkgver
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  cat <<EOF > make.inc
+SuperLUroot = $tmpdir/$srcdir
+SUPERLULIB  = \$(SuperLUroot)/lib/libsuperlu.a
+TMGLIB      = libtmglib.a
+
+BLASDEF   = -DUSE_VENDOR_BLAS
+BLASLIB   = -framework Accelerate
+
+LIBS = \$(SUPERLULIB) \$(BLASLIB)
+
+ARCH         = ar
+ARCHFLAGS    = cr
+RANLIB       = echo
+
+CC           = cc
+CFLAGS       = -DPRNTlevel=0 -O3 -march=native -fPIC
+NOOPTS       = -O0 -fPIC
+FORTRAN      = gfortran
+FFLAGS       = -O3 -march=native -fPIC
+LOADER       = \$(CC)
+LOADOPTS     = -Wa,-q
+CDEFS        = -DAdd_
+
+MATLAB =
+EOF
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make cleanlib
+  make lib
+  popd
+}
+
+testing()
+{
+  pushd $tmpdir/$srcdir
+  make cleantesting
+  make testing
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install manually
+  install -d ${destdir}/lib
+  install -m 755 $tmpdir/${srcdir}/lib/libsuperlu.a ${destdir}/lib
+  install -d $destdir/include
+  install -m 644 $tmpdir/$srcdir/SRC/*.h $destdir/include
+  rm -v $destdir/include/{html_mainpage,colamd}.h
+  # shared lib
+  pushd ${destdir}/lib
+  LINK=cc
+  make_shlib libsuperlu.a ${pkgver} \
+    -framework Accelerate
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SUPERLU_DIR $REPO/opt/superlu-$pkgver
+setenv SUPERLU_DIR \$SUPERLU_DIR
+
+prepend-path PATH \$SUPERLU_DIR/bin
+prepend-path DYLD_LIBRARY_PATH \$SUPERLU_DIR/lib
+EOT)
+

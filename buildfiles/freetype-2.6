@@ -1,0 +1,20 @@
+# vim: set ft=sh:
+pkgname=freetype
+pkgver=2.6
+pkgurl=http://download.savannah.gnu.org/releases/freetype/freetype-${pkgver}.tar.bz2
+
+module load pkg-config
+module load libpng
+
+confopts="--without-harfbuzz"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load libpng
+set FREETYPE_DIR $REPO/opt/freetype-$pkgver
+setenv FREETYPE_DIR \$FREETYPE_DIR
+
+prepend-path PATH \$FREETYPE_DIR/bin
+prepend-path MANPATH \$FREETYPE_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$FREETYPE_DIR/lib/pkgconfig
+EOT)

@@ -1,0 +1,177 @@
+diff --git a/CHOLMOD/Demo/Makefile b/CHOLMOD/Demo/Makefile
+index 894aaee..d454fb4 100644
+--- a/CHOLMOD/Demo/Makefile
++++ b/CHOLMOD/Demo/Makefile
+@@ -31,9 +31,9 @@ ifeq (,$(findstring -DNCAMD, $(CHOLMOD_CONFIG)))
+                 # METIS is requested.  See if it is available
+                 ifeq ($(METIS_PATH), $(wildcard $(METIS_PATH)))
+                     # METIS is available
+-                    LIB_WITH_PARTITION = $(METIS) \
++                    LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
+                         ../../CCOLAMD/Lib/libccolamd.a ../../CAMD/Lib/libcamd.a
+-                    I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                    I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                         -I../../CCOLAMD/Include -I../../CAMD/Include
+                     CONFIG =
+                 endif
+@@ -102,10 +102,6 @@ else
+ 	( cd ../../CCOLAMD ; $(MAKE) library )
+ 	( cd ../../CAMD ; $(MAKE) library )
+ endif
+-ifneq (,$(findstring -DNPARTITION, $(CONFIG)))
+-else
+-	( cd $(METIS_PATH) && $(MAKE) )
+-endif
+ 
+ #-------------------------------------------------------------------------------
+ 
+diff --git a/CHOLMOD/Lib/Makefile b/CHOLMOD/Lib/Makefile
+index 3893d39..80b8f35 100644
+--- a/CHOLMOD/Lib/Makefile
++++ b/CHOLMOD/Lib/Makefile
+@@ -30,9 +30,9 @@ ifeq (,$(findstring -DNCAMD, $(CHOLMOD_CONFIG)))
+                 # METIS is requested.  See if it is available
+                 ifeq ($(METIS_PATH), $(wildcard $(METIS_PATH)))
+                     # METIS is available
+-                    LIB_WITH_PARTITION = $(METIS) \
++                    LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
+                         ../../CCOLAMD/Lib/libccolamd.a ../../CAMD/Lib/libcamd.a
+-                    I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                    I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                         -I../../CCOLAMD/Include -I../../CAMD/Include
+                     CONFIG =
+                 endif
+diff --git a/CHOLMOD/Tcov/Makefile b/CHOLMOD/Tcov/Makefile
+index dd67e1c..3c07391 100644
+--- a/CHOLMOD/Tcov/Makefile
++++ b/CHOLMOD/Tcov/Makefile
+@@ -24,7 +24,7 @@ CC = gcc
+ C = $(CC) $(CF) $(CHOLMOD_CONFIG) $(NANTESTS)
+ 
+ # default LAPACK and BLAS from SuiteSparse_config.mk:
+-  LIB = $(METIS) -lm $(LAPACK) $(BLAS) -lrt
++  LIB = -L$(METIS_PATH)/lib -lmetis -lm $(LAPACK) $(BLAS) -lrt
+ 
+ # optimized LAPACK and BLAS
+ # LIB = $(METIS) -lm $(LAPACK) $(BLAS) $(XERBLA) -L/shared/apps/rhel-6.2/intel/ics-2013/lib/intel64 -liomp5
+diff --git a/SPQR/Demo/Makefile b/SPQR/Demo/Makefile
+index 4df7c33..d014d77 100644
+--- a/SPQR/Demo/Makefile
++++ b/SPQR/Demo/Makefile
+@@ -20,9 +20,10 @@ ifeq (,$(findstring -DNPARTITION, $(CHOLMOD_CONFIG)))
+         ifeq (../../CAMD, $(wildcard ../../CAMD))
+             ifeq (../../CCOLAMD, $(wildcard ../../CCOLAMD))
+                 # METIS, CAMD, and CCOLAMD are available
+-                LIB_WITH_PARTITION = $(METIS) ../../CCOLAMD/Lib/libccolamd.a \
++                LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
++                    ../../CCOLAMD/Lib/libccolamd.a \
+                     ../../CAMD/Lib/libcamd.a
+-                I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                     -I../../CCOLAMD/Include -I../../CAMD/Include
+                 CONFIG_PARTITION =
+             endif
+@@ -172,9 +173,6 @@ gpu4: qrdemo_gpu
+ ../../GPUQREngine/Lib/libGPUQREngine.a:
+ 	- ( cd ../../GPUQREngine && $(MAKE) )
+ 
+-$(METIS):
+-	- ( cd $(METIS_PATH) && $(MAKE) )
+-
+ library:
+ 	( cd ../Lib ; $(MAKE) )
+ 	( cd ../../AMD ; $(MAKE) library )
+@@ -187,9 +185,6 @@ ifneq ($(GPU_CONFIG),)
+ 	- ( cd ../../SuiteSparse_GPURuntime && $(MAKE) )
+ 	- ( cd ../../GPUQREngine && $(MAKE) )
+ endif
+-ifneq ($(GPU_CONFIG),)
+-	- ( cd $(METIS_PATH) && $(MAKE) )
+-endif
+ 
+ purge: distclean
+ 	- $(RM) -r *.dot pfile tfile
+diff --git a/SPQR/Lib/Makefile b/SPQR/Lib/Makefile
+index eae51aa..46abdea 100644
+--- a/SPQR/Lib/Makefile
++++ b/SPQR/Lib/Makefile
+@@ -20,9 +20,10 @@ ifeq (,$(findstring -DNPARTITION, $(CHOLMOD_CONFIG)))
+         ifeq (../../CAMD, $(wildcard ../../CAMD))
+             ifeq (../../CCOLAMD, $(wildcard ../../CCOLAMD))
+                 # METIS, CAMD, and CCOLAMD are available
+-                LIB_WITH_PARTITION = $(METIS) ../../CCOLAMD/Lib/libccolamd.a \
++                LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
++                    ../../CCOLAMD/Lib/libccolamd.a \
+                     ../../CAMD/Lib/libcamd.a
+-                I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                     -I../../CCOLAMD/Include -I../../CAMD/Include
+                 CONFIG_PARTITION =
+             endif
+diff --git a/SPQR/Tcov/Makefile b/SPQR/Tcov/Makefile
+index 4d01962..91d398d 100644
+--- a/SPQR/Tcov/Makefile
++++ b/SPQR/Tcov/Makefile
+@@ -5,10 +5,10 @@
+ # This test requires METIS, and it only works on Linux.
+ 
+ # run statement-coverage test without Valgrind
+-default: $(METIS) go
++default: go
+ 
+ # to run with Valgrind as well
+-valgrind: $(METIS) vgo
++valgrind: vgo
+ 
+ ccode: all
+ 
+@@ -46,7 +46,7 @@ CLIB = ../../CHOLMOD/Lib/libcholmod.a \
+        ../../CCOLAMD/Lib/libccolamd.a \
+        ../../CAMD/Lib/libcamd.a \
+        ../../SuiteSparse_config/libsuitesparseconfig.a \
+-       $(METIS)
++       -L$(METIS_PATH)/lib -lmetis
+ 
+ all: qrtest gpudemo qrdemo_gpu
+ 
+@@ -340,9 +340,6 @@ spqrgpu_computeFrontStaging.o: ../SPQRGPU/spqrgpu_computeFrontStaging.cpp
+ # libraries compiled without test coverage
+ #-------------------------------------------------------------------------------
+ 
+-$(METIS):
+-	( cd ../../metis-4.0/Lib && $(MAKE) )
+-
+ ../../CHOLMOD/Lib/libcholmod.a:
+ 	( cd ../../CHOLMOD && $(MAKE) library )
+ 
+diff --git a/UMFPACK/Demo/Makefile b/UMFPACK/Demo/Makefile
+index b4b3861..eb9205b 100644
+--- a/UMFPACK/Demo/Makefile
++++ b/UMFPACK/Demo/Makefile
+@@ -36,10 +36,10 @@ ifeq (,$(findstring -DNCHOLMOD, $(UMFPACK_CONFIG)))
+                     ifeq (../../CAMD, $(wildcard ../../CAMD))
+                         ifeq (../../CCOLAMD, $(wildcard ../../CCOLAMD))
+                             # METIS, CAMD, and CCOLAMD are available
+-                            LIB_WITH_PARTITION = $(METIS) \
++                            LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
+                                 ../../CCOLAMD/Lib/libccolamd.a \
+                                 ../../CAMD/Lib/libcamd.a
+-                            I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                            I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                                 -I../../CCOLAMD/Include -I../../CAMD/Include
+                             CONFIG2 =
+                         endif
+@@ -80,12 +80,9 @@ LIBS = $(LAPACK) $(BLAS) $(XERBLA) $(LIB) $(LIB_WITH_CHOLMOD) $(LIB_WITH_PARTITI
+ ../../CAMD/Lib/libcamd.a:
+ 	- ( cd ../../CAMD && $(MAKE) library )
+ 
+-$(METIS):
+-	( cd $(METIS_PATH) && $(MAKE) )
+-
+ UMFPACK = ../Lib/libumfpack.a ../../AMD/Lib/libamd.a \
+     ../../SuiteSparse_config/libsuitesparseconfig.a \
+-    $(LIB_WITH_CHOLMOD) $(LIB_WITH_PARTITION) 
++    $(LIB_WITH_CHOLMOD)
+ 
+ libs: $(UMFPACK)
+ 
