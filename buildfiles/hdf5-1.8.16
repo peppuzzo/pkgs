@@ -24,8 +24,6 @@ confopts+=" --enable-fortran"
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load openmpi
-module load szip
 set HDF5_DIR $REPO/opt/hdf5-$pkgver
 setenv HDF5_DIR \$HDF5_DIR
 

@@ -9,7 +9,6 @@ module load openmpi
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load openmpi
 set SCOTCH_DIR $REPO/opt/scotch-$pkgver
 setenv SCOTCH_DIR \$SCOTCH_DIR
 EOT)

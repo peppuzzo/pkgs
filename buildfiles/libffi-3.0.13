@@ -5,7 +5,6 @@ pkgurl=https://mirrorservice.org/sites/sources.redhat.com/pub/libffi/libffi-${pk
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gmp
 set LIBFFI_DIR $REPO/opt/libffi-$pkgver
 setenv LIBFFI_DIR \$LIBFFI_DIR
 

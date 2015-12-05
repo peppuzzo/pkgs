@@ -32,8 +32,6 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load freetype
-
 set OCC_DIR $REPO/opt/$pkgname-$pkgver
 set CASROOT $REPO/opt/$pkgname-$pkgver
 set OCC_SYS_NAME mac64/clang

@@ -40,16 +40,6 @@ EOT)
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load libpng
-module load libjpeg-turbo
-module load freetype
-module load openmpi
-module load fltk
-module load opencascade
-module load hdf5
-module load petsc
-module load slepc
-
 set GMSH_DIR $REPO/opt/gmsh-$pkgver
 setenv GMSH_DIR \$GMSH_DIR
 

@@ -17,10 +17,6 @@ builddir=$tmpdir/$srcdir/mybuild
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load libxml2
-module load freetype
-module load libpng
-module load pixman
 set CAIRO_DIR $REPO/opt/cairo-$pkgver
 setenv CAIRO_DIR \$CAIRO_DIR
 

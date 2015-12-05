@@ -4,7 +4,13 @@ pkgver=4.0.1
 
 module load python
 
-prepare() { :; }
+prepare()
+{
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+}
 configure() { :; }
 build() { :; }
 package()

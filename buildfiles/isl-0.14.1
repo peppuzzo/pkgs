@@ -8,7 +8,6 @@ confopts="--with-gmp=system --with-gmp-prefix=$GMP_DIR"
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gmp
 set ISL_DIR $REPO/opt/isl-$pkgver
 setenv ISL_DIR \$ISL_DIR
 

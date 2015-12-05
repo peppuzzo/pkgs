@@ -19,7 +19,6 @@ testing() { :; }
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load python
 set CYTHON_DIR $REPO/opt/cython-$pkgver
 setenv CYTHON_DIR \$CYTHON_DIR
 

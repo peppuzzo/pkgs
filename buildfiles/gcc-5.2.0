@@ -38,10 +38,6 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gmp
-module load mpfr
-module load libmpc
-module load isl
 set GCC_DIR $REPO/opt/gcc-$pkgver
 setenv GCC_DIR \$GCC_DIR
 

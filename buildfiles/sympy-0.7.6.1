@@ -19,8 +19,6 @@ testing() { :; }
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gcc
-module load numpy
 set SYMPY_DIR $REPO/opt/sympy-$pkgver
 
 prepend-path PYTHONPATH \$SYMPY_DIR/lib/python2.7/site-packages

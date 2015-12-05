@@ -1,0 +1,36 @@
+diff -bur /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlottableGenericFunction.cpp dolfin/plot/VTKPlottableGenericFunction.cpp
+--- /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlottableGenericFunction.cpp	2015-07-28 17:05:55.000000000 +0200
++++ dolfin/plot/VTKPlottableGenericFunction.cpp	2015-10-06 18:58:32.000000000 +0200
+@@ -23,6 +23,7 @@
+ 
+ #ifdef HAS_VTK
+ 
++#include <vtkVersion.h>
+ #include <vtkArrowSource.h>
+ #include <vtkUnstructuredGrid.h>
+ 
+Only in /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot: VTKPlottableGenericFunction.cpp.rej
+diff -bur /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlottableGenericFunction1D.cpp dolfin/plot/VTKPlottableGenericFunction1D.cpp
+--- /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlottableGenericFunction1D.cpp	2015-07-28 17:05:55.000000000 +0200
++++ dolfin/plot/VTKPlottableGenericFunction1D.cpp	2015-10-06 18:57:59.000000000 +0200
+@@ -20,6 +20,7 @@
+ 
+ #ifdef HAS_VTK
+ 
++#include <vtkVersion.h>
+ #include <vtkXYPlotActor.h>
+ #include <vtkUnstructuredGrid.h>
+ #include <vtkProperty2D.h>
+Only in /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot: VTKPlottableGenericFunction1D.cpp.rej
+diff -bur /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlotter.cpp dolfin/plot/VTKPlotter.cpp
+--- /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot/VTKPlotter.cpp	2015-07-28 17:05:55.000000000 +0200
++++ dolfin/plot/VTKPlotter.cpp	2015-10-06 18:59:04.000000000 +0200
+@@ -36,6 +36,7 @@
+ 
+ #ifdef HAS_VTK
+ 
++#include <vtkVersion.h>
+ #include "VTKWindowOutputStage.h"
+ #include "VTKPlottableGenericFunction.h"
+ #include "VTKPlottableMesh.h"
+Only in /Users/peppu/dev/pkgs/src/fenics-1.6.0/dolfin-1.6.0/dolfin/plot: VTKPlotter.cpp.rej

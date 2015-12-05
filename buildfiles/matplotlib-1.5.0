@@ -10,7 +10,13 @@ module load gcc
 module load numpy
 module load scipy
 
-prepare() { :; }
+prepare()
+{
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+}
 configure() { :; }
 build() { :; }
 package()
@@ -80,12 +86,9 @@ testing() { :; }
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load freetype
-module load gcc
+module load python
 module load numpy
 module load scipy
-module load freetype
-module load libpng
 
 set MATPLOTLIB_DIR $REPO/opt/matplotlib-$pkgver
 setenv MATPLOTLIB_DIR \$MATPLOTLIB_DIR

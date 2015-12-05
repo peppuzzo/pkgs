@@ -16,6 +16,7 @@ module load openmpi
 module load hdf5
 module load cmake
 module load mpi4py
+module load netcdf
 module load netcdf-cxx
 module load boost
 
@@ -66,13 +67,8 @@ build()
 pkgmodule=$(cat <<-EOT
 #%Module
 module load python
-module load openmpi
-module load hdf5
-module load cmake
 module load mpi4py
-module load libpng
-module load netcdf-cxx
-module load boost
+module load matplotlib
 
 set VTK_DIR $REPO/opt/vtk-$pkgver
 setenv VTK_DIR \$VTK_DIR

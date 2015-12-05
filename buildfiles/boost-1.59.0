@@ -32,12 +32,31 @@ build()
     --libdir=$destdir/lib \
     -d2 \
     -j8 \
+    variant=release \
+    link=static,shared \
     --layout=tagged \
     install
   popd
 }
 
+pre_package() { :; }
 package() { :; }
+
+post_package()
+{
+  # change install name to absolute path
+  pushd $destdir/lib
+  for f in `ls -1 *.dylib`; do
+    echo $f
+    # grep the dependencies and skip empty lines
+    for ll in `otool -L $f | perl -ne '/\t(:?libboost.*.dylib)/g; print "$1\n"' | sed '/^$/d' | uniq | tail -n+2`; do
+      echo "   $ll"
+      install_name_tool -change $ll $destdir/lib/$ll $f
+    done
+    install_name_tool -id $destdir/lib/$f $f
+  done
+  popd
+}
 
 pkgmodule=$(cat <<-EOT
 #%Module

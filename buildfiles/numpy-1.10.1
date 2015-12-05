@@ -18,8 +18,6 @@ testing() { :; }
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gcc
-module load python
 set NUMPY_DIR $REPO/opt/numpy-$pkgver
 setenv NUMPY_DIR \$NUMPY_DIR
 

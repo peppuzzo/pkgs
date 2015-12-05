@@ -39,7 +39,6 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load openmpi
 set PARMETIS_DIR $REPO/opt/parmetis-$pkgver
 setenv PARMETIS_DIR \$PARMETIS_DIR
 

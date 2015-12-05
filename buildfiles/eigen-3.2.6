@@ -1,13 +1,15 @@
 # vim: set ft=sh:
-pkgname=scalapack
-pkgver=2.0.2
-pkgurl=http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
+pkgname=eigen
+pkgver=3.2.6
+pkgurl=https://bitbucket.org/eigen/eigen/get/${pkgver}.tar.bz2
 destdir=$REPO/opt/$pkgname-$pkgver
+srcdir=eigen-eigen-c58038c56923
 
 export USE_CMAKE=1
+module load pkg-config
 module load cmake
 module load gcc
-module load openmpi
+
 confopts=$(cat <<-EOT
 -D BUILD_SHARED_LIBS:BOOL=ON
 -D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
@@ -17,6 +19,8 @@ EOT)
 
 pkgmodule=$(cat <<-EOT
 #%Module
-set SCALAPACK_DIR $REPO/opt/scalapack-$pkgver
-setenv SCALAPACK_DIR \$SCALAPACK_DIR
+set EIGEN_DIR $REPO/opt/eigen-$pkgver
+setenv EIGEN_DIR \$EIGEN_DIR
+
+prepend-path PKG_CONFIG_PATH \$EIGEN_DIR/lib/pkgconfig
 EOT)

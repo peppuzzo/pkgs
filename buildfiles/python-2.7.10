@@ -46,8 +46,6 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load readline
-module load openssl
 set PYTHON_DIR $destdir
 setenv PYTHON_DIR \$PYTHON_DIR
 

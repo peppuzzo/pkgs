@@ -7,12 +7,8 @@ pkgurl=${_baseurl}/hwloc-${pkgver}.tar.bz2
 module load pkg-config
 module load cairo
 
-#export CFLAGS="-I$CUDA_DIR/include"
-#export LDFLAGS="-L$CUDA_DIR/lib"
-
 pkgmodule=$(cat <<-EOT
 #%Module
-module load cairo
 set HWLOC_DIR $REPO/opt/hwloc-$pkgver
 setenv HWLOC_DIR \$HWLOC_DIR
 

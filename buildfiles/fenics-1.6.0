@@ -1,0 +1,79 @@
+# vim: set ft=sh:
+pkgname=fenics
+pkgver=1.6.0
+srcdir=$tmpdir/dolfin-$pkgver
+destdir=$REPO/opt/fenics-${pkgver}
+
+export USE_CMAKE=1
+export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+
+module load openmpi hdf5
+module load python ipython matplotlib sympy swig
+module load cmake pkg-config
+module load boost vtk
+module load eigen suitesparse scotch metis parmetis
+module load petsc slepc
+
+pre_package() { :; }
+prepare()
+{
+  if [ -d $destdir ]; then
+    rm -rf $destdir
+  fi
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+  pushd $tmpdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  # ply
+  curl -O -L http://www.dabeaz.com/ply/ply-3.8.tar.gz
+  tar xvfz ply-3.8.tar.gz
+  pushd ply-3.8
+  python setup.py install --prefix=$destdir
+  popd
+  # ufl
+  for fenicspkg in "ufl" "uflacs" "fiat" "instant" "ffc"; do
+    curl -O -L https://bitbucket.org/fenics-project/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
+    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
+    pushd ${fenicspkg}-${pkgver}
+    python setup.py install --prefix=$destdir
+    popd
+  done
+  curl -O -L https://bitbucket.org/fenics-project/dolfin/downloads/dolfin-${pkgver}.tar.gz
+  tar xvfz dolfin-${pkgver}.tar.gz
+  pushd dolfin-${pkgver}
+  patch -Np1 < $REPO/buildfiles/dolfin_find_metis.patch
+  patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
+  popd
+  popd
+}
+
+confopts=$(cat <<-EOT
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+-D EIGEN3_INCLUDE_DIR:PATH=$EIGEN_DIR/include/eigen3
+-D AMD_DIR:PATH=$SUITESPARSE_DIR
+-D UMFPACK_DIR:PATH=$SUITESPARSE_DIR
+-D CHOLMOD_DIR:PATH=$SUITESPARSE_DIR
+EOT)
+
+pkgmodule=$(cat <<-EOT
+#%Module
+# several modules are required for instant compilation
+module load openmpi hdf5
+module load python ipython matplotlib sympy swig numpy scipy
+module load cmake pkg-config
+module load boost vtk
+module load eigen suitesparse scotch metis parmetis
+module load petsc slepc
+
+set FENICS_DIR $REPO/opt/fenics-$pkgver
+
+prepend-path PATH \$FENICS_DIR/bin
+prepend-path MANPATH \$FENICS_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$FENICS_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$FENICS_DIR/lib/python2.7/site-packages
+EOT)

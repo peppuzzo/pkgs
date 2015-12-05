@@ -1,6 +1,7 @@
 # vim: set ft=sh:
 pkgname=petsc
 pkgver=3.6.2
+petsc4pyver=3.6.0
 pkgurl=http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${pkgver}.tar.gz
 
 unset PETSC_DIR
@@ -15,6 +16,8 @@ module load hdf5
 module load superlu
 module load superlu_dist
 module load scalapack
+module load numpy
+module load mpi4py
 
 configure()
 {
@@ -62,22 +65,29 @@ package()
   popd
 }
 
+post_package()
+{
+  # petsc4py
+  pushd $tmpdir
+  curl -O -L https://bitbucket.org/petsc/petsc4py/downloads/petsc4py-${petsc4pyver}.tar.gz
+  tar xvfz petsc4py-${petsc4pyver}.tar.gz
+  pushd petsc4py-${petsc4pyver}
+  export PETSC_DIR=$destdir
+  python setup.py install --prefix=$destdir
+  popd
+  popd
+}
+
 pkgmodule=$(cat <<-EOT
 #%Module
-module load openmpi
-module load suitesparse
-module load metis
-module load parmetis
-module load hwloc
-module load scotch
-module load hdf5
-module load superlu
-module load superlu_dist
-module load scalapack
+module load python
+module load numpy
+module load mpi4py
 
 set PETSC_DIR $REPO/opt/petsc-$pkgver
 setenv PETSC_DIR \$PETSC_DIR
 
 prepend-path PATH \$PETSC_DIR/bin
 prepend-path PKG_CONFIG_PATH \$PETSC_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$PETSC_DIR/lib/python2.7/site-packages
 EOT)

@@ -1,0 +1,64 @@
+diff --git a/cmake/modules/FindParMETIS.cmake b/cmake/modules/FindParMETIS.cmake
+index f174d12..f86cb0a 100644
+--- a/cmake/modules/FindParMETIS.cmake
++++ b/cmake/modules/FindParMETIS.cmake
+@@ -37,32 +37,36 @@
+ 
+ if (MPI_CXX_FOUND)
+   find_path(PARMETIS_INCLUDE_DIRS parmetis.h
+-    HINTS ${PARMETIS_DIR}/include $ENV{PARMETIS_DIR}/include ${PETSC_DIR}/include ${PETSC_DIR}/${PETSC_ARCH}/include
++    HINTS ${PARMETIS_DIR}/include $ENV{PARMETIS_DIR}/include
++          ${METIS_DIR}/include $ENV{METIS_DIR}/include
++          ${PETSC_DIR}/include ${PETSC_DIR}/${PETSC_ARCH}/include
+     DOC "Directory where the ParMETIS header files are located"
+   )
+ 
+-  find_library(PARMETIS_LIBRARY parmetis
+-    HINTS ${PARMETIS_DIR}/lib $ENV{PARMETIS_DIR}/lib ${PETSC_DIR}/lib ${PETSC_DIR}/${PETSC_ARCH}/lib
+-    NO_DEFAULT_PATH
+-    DOC "Directory where the ParMETIS library is located"
++  find_path(METIS_INCLUDE_DIRS metis.h
++    HINTS ${PARMETIS_DIR}/include $ENV{PARMETIS_DIR}/include
++          ${METIS_DIR}/include $ENV{METIS_DIR}/include
++          ${PETSC_DIR}/include ${PETSC_DIR}/${PETSC_ARCH}/include
++    DOC "Directory where the METIS header files are located"
+   )
++
+   find_library(PARMETIS_LIBRARY parmetis
++    HINTS ${PARMETIS_DIR}/lib $ENV{PARMETIS_DIR}/lib
++          ${METIS_DIR}/lib $ENV{METIS_DIR}/lib
++          ${PETSC_DIR}/lib ${PETSC_DIR}/${PETSC_ARCH}/lib
++    NO_DEFAULT_PATH
+     DOC "Directory where the ParMETIS library is located"
+   )
+ 
+   find_library(METIS_LIBRARY metis
+-    HINTS ${PARMETIS_DIR}/lib $ENV{PARMETIS_DIR}/lib ${PETSC_DIR}/lib ${PETSC_DIR}/${PETSC_ARCH}/lib
++    HINTS ${PARMETIS_DIR}/lib $ENV{PARMETIS_DIR}/lib
++          ${METIS_DIR}/lib $ENV{METIS_DIR}/lib
++          ${PETSC_DIR}/lib ${PETSC_DIR}/${PETSC_ARCH}/lib
+     NO_DEFAULT_PATH
+     DOC "Directory where the METIS library is located"
+   )
+-  find_library(METIS_LIBRARY metis
+-    DOC "Directory where the METIS library is located"
+-  )
+ 
+-  set(PARMETIS_LIBRARIES ${PARMETIS_LIBRARY})
+-  if (METIS_LIBRARY)
+-    set(PARMETIS_LIBRARIES ${PARMETIS_LIBRARIES} ${METIS_LIBRARY})
+-  endif()
++  set(PARMETIS_LIBRARIES ${PARMETIS_LIBRARY} ${METIS_LIBRARY})
+ 
+   # Try compiling and running test program
+   if (DOLFIN_SKIP_BUILD_TESTS)
+@@ -72,7 +76,8 @@ if (MPI_CXX_FOUND)
+   elseif (PARMETIS_INCLUDE_DIRS AND PARMETIS_LIBRARY)
+ 
+   # Set flags for building test program
+-  set(CMAKE_REQUIRED_INCLUDES  ${PARMETIS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_PATH})
++  # Set flags for building test program
++  set(CMAKE_REQUIRED_INCLUDES  ${PARMETIS_INCLUDE_DIRS} ${METIS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_PATH})
+   set(CMAKE_REQUIRED_LIBRARIES ${PARMETIS_LIBRARIES}    ${MPI_CXX_LIBRARIES})
+   set(CMAKE_REQUIRED_FLAGS     ${CMAKE_REQUIRED_FLAGS}  ${MPI_CXX_COMPILE_FLAGS})
+ 

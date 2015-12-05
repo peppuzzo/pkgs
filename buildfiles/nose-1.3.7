@@ -19,7 +19,6 @@ testing() { :; }
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load python
 set NOSE_DIR $REPO/opt/nose-$pkgver
 
 prepend-path PYTHONPATH \$NOSE_DIR/lib/python2.7/site-packages

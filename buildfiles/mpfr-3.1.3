@@ -8,7 +8,6 @@ confopts="--enable-thread-safe --enable-shared --with-gmp=$GMP_DIR"
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load gmp
 set MPFR_DIR $REPO/opt/mpfr-$pkgver
 setenv MPFR_DIR \$MPFR_DIR
 

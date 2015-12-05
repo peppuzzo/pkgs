@@ -15,7 +15,6 @@ confopts="--enable-shared"
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load netcdf
 set NETCDFCXX_DIR $REPO/opt/netcdf-cxx-$pkgver
 setenv NETCDFCXX_DIR \$NETCDFCXX_DIR
 
@@ -23,4 +22,3 @@ prepend-path PATH \$NETCDFCXX_DIR/bin
 prepend-path PKG_CONFIG_PATH \$NETCDFCXX_DIR/lib/pkgconfig
 prepend-path DYLD_LIBRARY_PATH \$NETCDFCXX_DIR/lib
 EOT)
-

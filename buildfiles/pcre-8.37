@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+pkgname=pcre
+pkgver=8.37
+pkgurl=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/${pkgname}-${pkgver}.tar.bz2
+
+confopts="--enable-pcre16 --enable-pcre32 --enable-jit --enable-utf --enable-unicode-properties"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load python
+set PCRE_DIR $REPO/opt/$pkgname-$pkgver
+setenv PCRE_DIR \$PCRE_DIR
+
+prepend-path PATH \$PCRE_DIR/bin
+prepend-path MANPATH \$PCRE_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$PCRE_DIR/lib/pkgconfig
+EOT)

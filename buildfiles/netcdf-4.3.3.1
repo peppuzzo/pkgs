@@ -15,8 +15,6 @@ confopts="--enable-shared --enable-netcdf-4"
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load openmpi
-module load hdf5
 set NETCDF_DIR $REPO/opt/netcdf-$pkgver
 setenv NETCDF_DIR \$NETCDF_DIR
 
