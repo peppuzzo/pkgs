@@ -1,0 +1,13 @@
+diff --git a/ffc/backends/ufc/build.py b/ffc/backends/ufc/build.py
+index 4e0033e..e12420a 100644
+--- a/ffc/backends/ufc/build.py
++++ b/ffc/backends/ufc/build.py
+@@ -69,7 +69,7 @@ del tmp, get_swigversion
+                                 source_directory        = source_directory,
+                                 additional_declarations = declarations,
+                                 system_headers          = system_headers,
+-                                cmake_packages          = ["UFC"],
++                                cmake_packages          = ["Dolfin"],
+                                 **kwargs)
+ 
+ def extract_declarations(h_files):

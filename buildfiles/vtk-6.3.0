@@ -6,18 +6,10 @@ srcdir=VTK-$pkgver
 destdir=$REPO/opt/$pkgname-$pkgver
 
 export USE_CMAKE=1
-module load freetype
-module load libxml2
-module load libpng
-module load python
-module load matplotlib
-module load scipy
-module load openmpi
-module load hdf5
+module load freetype libxml2 libpng
+module load python scipy matplotlib mpi4py
+module load openmpi hdf5 netcdf netcdf-cxx
 module load cmake
-module load mpi4py
-module load netcdf
-module load netcdf-cxx
 module load boost
 
 export CXX=mpic++
@@ -43,13 +35,13 @@ confopts=$(cat <<-EOT
 -D VTK_USE_SYSTEM_NETCDF:BOOL=ON
 -D VTK_USE_SYSTEM_FREETYPE:BOOL=ON
 -D VTK_USE_SYSTEM_LIBXML2:BOOL=ON
+-D VTK_RENDERING_BACKEND:STRING=OpenGL2
 -D NETCDF_CXX_ROOT:PATH=$NETCDFCXX_DIR
 -D VTK_USE_COCOA:BOOL=ON
 -D BUILD_EXAMPLES:BOOL=OFF
 -D BUILD_TESTING:BOOL=OFF
 -D VTK_WRAP_PYTHON:BOOL=ON
 -D VTK_LEGACY_REMOVE:BOOL=ON
--D VTK_RENDERING_BACKEND:STRING=OpenGL2
 -D PYTHON_LIBRARY:PATH=`python-config --prefix`/lib/libpython2.7.dylib
 -D PYTHON_INCLUDE_DIR:PATH=`python-config --prefix`/include/python2.7
 -D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF

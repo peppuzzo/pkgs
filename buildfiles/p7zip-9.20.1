@@ -1,0 +1,41 @@
+# vim: set ft=sh:
+pkgname=p7zip
+pkgver=9.20.1
+pkgurl=https://downloads.sourceforge.net/project/p7zip/p7zip/${pkgver}/p7zip_${pkgver}_src_all.tar.bz2
+srcdir=${pkgname}_${pkgver}
+
+apply_patch()
+{
+  pushd $tmpdir/$srcdir
+  cp makefile.macosx_64bits makefile.machine
+  popd
+}
+
+configure() { :; }
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make all3
+  popd
+}
+
+package()
+{
+  pushd $tmpdir/$srcdir
+  make DEST_HOME=$destdir DEST_MAN=$destdir/share/man install
+  popd
+}
+
+post_package()
+{
+  chmod -R 550 $destdir/share
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set P7ZIP_DIR $REPO/opt/p7zip-$pkgver
+
+prepend-path PATH \$P7ZIP_DIR/bin
+prepend-path MAN_PATH \$P7ZIP_DIR/share/man
+EOT)

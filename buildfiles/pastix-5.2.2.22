@@ -1,0 +1,115 @@
+# vim: filetype=sh
+pkgname=pastix
+pkgver=5.2.2.22
+srcdir=pastix_${pkgver}
+pkgurl=https://gforge.inria.fr/frs/download.php/file/35070/pastix_${pkgver}.tar.bz2
+
+module load gcc openmpi scotch
+
+configure()
+{
+  pushd $tmpdir/$srcdir/src
+  cat <<EOF > config.in
+HOSTARCH    = i686_mac
+VERSIONBIT  = _64bit
+EXEEXT      =
+OBJEXT      = .o
+LIBEXT      = .a
+CCPROG      = cc
+CFPROG      = gfortran
+CF90PROG    = gfortran
+MCFPROG     = mpif90
+CF90CCPOPT  =
+COMMON_OPT  = -DX_ARCHi686_mac -Wall
+CCFOPT      = -O3 -march=native \$(COMMON_OPT)
+CCFDEB      = -g3 \$(COMMON_OPT)
+NVCCOPT     = -O3 -march=native \$(COMMON_OPT)
+
+LKFOPT      =
+MKPROG      = make
+MPCCPROG    = mpicc -DX_ARCHi686_mac
+MPCXXPROG   = mpic++
+CPP         = cpp
+ARFLAGS     = ruv
+ARPROG      = ar
+EXTRALIB    = -lm
+
+VERSIONMPI  = _mpi
+VERSIONSMP  = _smp
+VERSIONSCH  = _static
+VERSIONINT  = _int
+VERSIONPRC  = _simple
+VERSIONFLT  = _real
+VERSIONORD  = _scotch
+
+ROOT       = ${destdir}
+INCLUDEDIR = \$(ROOT)/include
+LIBDIR     = \$(ROOT)/lib
+BINDIR     = \$(ROOT)/bin
+
+SHARED=1
+SOEXT=.dylib
+SHARED_FLAGS = -shared -Wl,-dylib_install_name -Wl,__SO_NAME__
+CCFDEB       := \$(CCFDEB) -fPIC
+CCFOPT       := \$(CCFOPT) -fPIC
+CFPROG       := \$(CFPROG) -fPIC
+
+VERSIONINT  = _int32
+CCTYPES     = -DINTSSIZE32
+
+CCTYPESFLT  =
+VERSIONPRC  = _double
+CCTYPESFLT := \$(CCTYPESFLT) -DPREC_DOUBLE
+
+CCPASTIX   := \$(CCPASTIX) -DCUDA_SM_VERSION=20
+NVCCOPT    := \$(NVCCOPT) -arch sm_20
+
+SCOTCH_HOME ?= $SCOTCH_DIR
+SCOTCH_INC ?= \$(SCOTCH_HOME)/include
+SCOTCH_LIB ?= \$(SCOTCH_HOME)/lib
+CCPASTIX   := \$(CCPASTIX) -I\$(SCOTCH_INC) -DDISTRIBUTED -DWITH_SCOTCH
+EXTRALIB   := \$(EXTRALIB) -L\$(SCOTCH_LIB) -lptscotch -lscotch -lptscotcherrexit
+
+EXTRALIB   := \$(EXTRALIB) -lpthread -L$GCC_DIR/lib -lgfortran
+
+BLASLIB =  -framework Accelerate
+
+FOPT      := \$(CCFOPT)
+FDEB      := \$(CCFDEB)
+CCHEAD    := \$(CCPROG) \$(CCTYPES) \$(CCFOPT)
+CCFOPT    := \$(CCFOPT) \$(CCTYPES) \$(CCPASTIX)
+CCFDEB    := \$(CCFDEB) \$(CCTYPES) \$(CCPASTIX)
+NVCCOPT   := \$(NVCCOPT) \$(CCTYPES) \$(CCPASTIX)
+
+MAKE     = \$(MKPROG)
+CC       = \$(MPCCPROG)
+CFLAGS   = \$(CCFOPT) \$(CCTYPESFLT)
+FC       = \$(MCFPROG)
+FFLAGS   = \$(CCFOPT)
+LDFLAGS  = \$(EXTRALIB) \$(BLASLIB)
+EOF
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir/src
+  make all
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  pushd $tmpdir/$srcdir/src
+  make install
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set PASTIX_DIR $REPO/opt/pastix-$pkgver
+setenv PASTIX_DIR \$PASTIX_DIR
+EOT)

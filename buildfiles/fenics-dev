@@ -1,7 +1,7 @@
 # vim: set ft=sh:
 pkgname=fenics
-pkgver=1.6.0
-srcdir=$tmpdir/dolfin-$pkgver
+pkgver=dev
+srcdir=$tmpdir/dolfin
 destdir=$REPO/opt/fenics-${pkgver}
 
 export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
@@ -31,23 +31,36 @@ prepare()
   pushd ply-3.8
   python setup.py install --prefix=$destdir
   popd
-  # ufl
   for fenicspkg in "ufl" "uflacs" "fiat" "instant" "ffc"; do
-    curl -O -L https://bitbucket.org/fenics-project/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
-    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
-    pushd ${fenicspkg}-${pkgver}
-    if [[ ${fenicspkg} = "ffc" ]]; then
-      patch -Np1 < $REPO/buildfiles/fenics_ffc_boost.patch
+    if [[ -d $fenicspkg ]]; then
+      pushd $fenicspkg
+      git pull
+      popd
+    else
+      git clone git@bitbucket.org:fenics-project/${fenicspkg}.git
+      if [[ ${fenicspkg} = "ffc" ]]; then
+        pushd ${fenicspkg}
+        git apply $REPO/buildfiles/fenics_ffc_boost.patch
+        popd
+      fi
     fi
+    pushd ${fenicspkg}
     python setup.py install --prefix=$destdir
     popd
   done
-  curl -O -L https://bitbucket.org/fenics-project/dolfin/downloads/dolfin-${pkgver}.tar.gz
-  tar xvfz dolfin-${pkgver}.tar.gz
-  pushd dolfin-${pkgver}
-  patch -Np1 < $REPO/buildfiles/dolfin_find_metis.patch
-  patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-  popd
+  # dolfin
+  if [[ -d dolfin ]]; then
+    pushd dolfin
+    git pull
+    popd
+  else
+    git clone git@bitbucket.org:fenics-project/dolfin.git
+    pushd dolfin
+    patch -Np1 < $REPO/buildfiles/dolfin_find_metis.patch
+    patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
+    git apply $REPO/buildfiles/dolfin_vtk_opengl.patch
+    popd
+  fi
   popd
 }
 

@@ -1,0 +1,106 @@
+# vim: filetype=sh
+pkgname=mumps
+pkgver=5.0.1
+srcdir=MUMPS_${pkgver}
+pkgurl=http://mumps.enseeiht.fr/MUMPS_${pkgver}.tar.gz
+
+module load gcc openmpi scotch metis parmetis scalapack
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  cat <<EOF > Makefile.inc
+SCOTCHDIR = $SCOTCH_DIR
+ISCOTCH    = -I\$(SCOTCHDIR)/include
+LSCOTCH    = -L\$(SCOTCHDIR)/lib -lptesmumps -lesmumps -lptscotch -lscotch -lscotcherr -lz -lm
+
+LPORDDIR  = \$(topdir)/PORD/lib
+IPORD     = -I\$(topdir)/PORD/include
+LPORD     = -L\$(LPORDDIR) -lpord
+
+IMETIS    = -I$METIS_DIR/include -I$PARMETIS_DIR/include
+LMETIS    = -L$METIS_DIR/lib -lmetis -L$PARMETIS_DIR/lib -lparmetis
+
+ORDERINGSF = -Dpord -Dparmetis -Dmetis -Dscotch -Dptscotch
+ORDERINGSC = \$(ORDERINGSF)
+
+LORDERINGS = \$(LSCOTCH) \$(LPORD) \$(LMETIS)
+IORDERINGSF = \$(ISCOTCH)
+IORDERINGSC = \$(ISCOTCH) \$(IMETIS) \$(IPORD)
+
+PLAT    =
+LIBEXT  = .a
+OUTC    = -o
+OUTF    = -o
+RM = /bin/rm -f
+CC = mpicc
+FC = mpif90
+FL = mpif90
+AR = ar vr 
+RANLIB = ranlib
+SCALAP = -L$SCALAPACK_DIR/lib -lscalapack
+INCPAR =
+LIBPAR = \$(SCALAP)
+# See point 17 in the FAQ to have more details on the compilation of mpich with gfortran
+INCSEQ =
+LIBSEQ =
+LIBBLAS = -framework Accelerate
+LIBOTHERS = -lm
+#Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
+CDEFS   = -DAdd_
+
+#Begin Optimized options
+OPTF    = -fPIC -O3 -DALLOW_NON_INIT
+OPTL    = -fPIC -O3
+OPTC    = -fPIC -O3
+#End Optimized options
+INCS = \$(INCPAR)
+LIBS = \$(LIBPAR)
+LIBSEQNEEDED =
+EOF
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make -j1 alllib
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  for dir in {lib,include}; do
+    install -d $destdir/$dir
+    install -m 755 $tmpdir/$srcdir/$dir/* $destdir/$dir
+  done
+
+  # shared libs
+  pushd $destdir/lib
+  export LINK=mpif90
+  make_shlib libpord.a ${pkgver}
+  make_shlib libmumps_common.a ${pkgver} \
+    -L$METIS_DIR/lib -lmetis \
+    -L$PARMETIS_DIR/lib -lparmetis \
+    -L$SCOTCH_DIR/lib -lptscotch -lptesmumps \
+    -L. -lpord
+  for tt in {c,d,z,s}; do
+    make_shlib lib${tt}mumps.a ${pkgver} \
+      -L$SCALAPACK_DIR/lib -lscalapack \
+      -L$PARMETIS_DIR/lib -lparmetis \
+      -L$METIS_DIR/lib -lmetis \
+      -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch \
+      -framework Accelerate \
+      -L. -lmumps_common
+  done
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set MUMPS_DIR $REPO/opt/mumps-$pkgver
+setenv MUMPS_DIR \$MUMPS_DIR
+EOT)

@@ -6,18 +6,10 @@ pkgurl=http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${pkgver}.t
 
 unset PETSC_DIR
 unset PETSC_ARCH
-module load openmpi
+module load hwloc openmpi hdf5
 module load suitesparse
-module load metis
-module load parmetis
-module load hwloc
-module load scotch
-module load hdf5
-module load superlu
-module load superlu_dist
-module load scalapack
-module load numpy
-module load mpi4py
+module load mumps pastix scalapack superlu superlu_dist scotch metis parmetis
+module load numpy mpi4py
 
 configure()
 {
@@ -42,6 +34,10 @@ configure()
     --with-hdf5-dir=$HDF5_DIR \
     --with-scalapack=1 \
     --with-scalapack-dir=$SCALAPACK_DIR \
+    --with-mumps=1 \
+    --with-mumps-dir=$MUMPS_DIR \
+    --with-pastix=1 \
+    --with-pastix-dir=$PASTIX_DIR \
     --with-superlu=1 \
     --with-superlu-lib=$SUPERLU_DIR/lib/libsuperlu.a \
     --with-superlu-include=$SUPERLU_DIR/include \

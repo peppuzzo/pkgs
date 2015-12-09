@@ -1,0 +1,15 @@
+# vim: set ft=sh:
+pkgname=cppunit
+pkgver=1.13.2
+pkgurl=http://dev-www.libreoffice.org/src/cppunit-${pkgver}.tar.gz
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load python
+set CPPUNIT_DIR $REPO/opt/$pkgname-$pkgver
+setenv CPPUNIT_DIR \$CPPUNIT_DIR
+
+prepend-path PATH \$CPPUNIT_DIR/bin
+prepend-path MANPATH \$CPPUNIT_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$CPPUNIT_DIR/lib/pkgconfig
+EOT)

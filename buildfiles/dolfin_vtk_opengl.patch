@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1e5c15b..d9d5277 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -602,7 +602,7 @@ endif()
+ # Check for VTK
+ if (DOLFIN_ENABLE_VTK)
+   find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
+-    vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
++    vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
+     NO_MODULE)
+   set(VTK_VERSION "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
+   if (VTK_FOUND)
+diff --git a/cmake/templates/UseDOLFIN.cmake.in b/cmake/templates/UseDOLFIN.cmake.in
+index e6f7276..8995478 100644
+--- a/cmake/templates/UseDOLFIN.cmake.in
++++ b/cmake/templates/UseDOLFIN.cmake.in
+@@ -13,7 +13,7 @@ if (NOT DOLFIN_USE_FILE_INCLUDED)
+   # http://www.vtk.org/pipermail/vtk-developers/2013-October/014402.html
+   if (@VTK_FOUND@)
+     find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
+-      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
++      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
+       NO_MODULE QUIET)
+     if (VTK_FOUND)
+       include(${VTK_USE_FILE})
