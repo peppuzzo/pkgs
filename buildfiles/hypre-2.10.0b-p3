@@ -1,0 +1,49 @@
+# vim: set ft=sh:
+pkgname=hypre
+pkgver=2.10.0b-p3
+pkgurl=http://ftp.mcs.anl.gov/pub/petsc/externalpackages/hypre-${pkgver}.tar.gz
+srcdir=$pkgname-$pkgver/src
+
+module load openmpi
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./configure \
+    CC="mpicc" \
+    CXX="mpicxx" \
+    CFLAGS="-O3 -fPIC" \
+    CXXFLAGS="-O3 -fPIC" \
+    --prefix=$destdir \
+    --libdir=$destdir/lib \
+    --with-blas=yes \
+    --with-lapack=yes \
+    --with-blas-libs="-framework Accelerate" \
+    --with-lapack-libs="-framework Accelerate" \
+    --without-babel \
+    --without-mli \
+    --without-fei \
+    --without-superlu
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make
+  popd
+}
+
+package()
+{
+  # install new one
+  pushd $tmpdir/$srcdir
+  make install
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set HYPRE_DIR $REPO/opt/hypre-$pkgver
+setenv HYPRE_DIR \$HYPRE_DIR
+EOT)

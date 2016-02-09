@@ -1,0 +1,46 @@
+# vim: set ft=sh:
+pkgname=h5py
+pkgver=2.5.0
+pkgurl=https://github.com/h5py/h5py/archive/${pkgver}.tar.gz
+
+module load hdf5
+module load openmpi
+module load numpy cython mpi4py
+
+export CC=mpicc
+
+apply_patch()
+{
+  pushd $tmpdir/$srcdir
+  patch -Np1 < $REPO/buildfiles/h5py_fix_libmpi_include.patch
+  popd
+}
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py configure --mpi
+  popd
+}
+build()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py build
+  popd
+}
+package()
+{
+  pushd $tmpdir/$srcdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set H5PY_DIR $REPO/opt/h5py-$pkgver
+
+prepend-path PYTHONPATH \$H5PY_DIR/lib/python2.7/site-packages
+EOT)

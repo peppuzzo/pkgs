@@ -29,5 +29,6 @@ popd
 rm -rf $REPO/src/modules-${modulever}
 
 # private modules
-source $REPO/modules/Modules/${modulever}/init/zsh
+source $REPO/modules/Modules/${modulever}/init/bash
 cp ${MODULESHOME}/modulefiles/null $REPO/modulefiles
+

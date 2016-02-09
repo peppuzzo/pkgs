@@ -3,7 +3,7 @@ pkgname=automake
 pkgver=1.15
 pkgurl=http://ftpmirror.gnu.org/automake/automake-${pkgver}.tar.xz
 
-module load autoconf
+module load autoconf libtool gcc
 
 pkgmodule=$(cat <<-EOT
 #%Module

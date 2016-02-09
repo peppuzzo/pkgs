@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+pkgname=swig
+pkgver=3.0.8
+pkgurl=http://downloads.sourceforge.net/${pkgname}/${pkgname}-${pkgver}.tar.gz
+
+module load pkg-config python pcre
+
+confopts="--without-java --without-perl5 --without-php --without-ruby --without-tcl"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SWIG_DIR $REPO/opt/$pkgname-$pkgver
+setenv SWIG_DIR \$SWIG_DIR
+
+prepend-path PATH \$SWIG_DIR/bin
+prepend-path MANPATH \$SWIG_DIR/share/man
+EOT)

@@ -1,0 +1,51 @@
+# vim: set ft=sh:
+pkgname=openssl
+pkgver=1.0.2f
+pkgurl=https://www.openssl.org/source/openssl-${pkgver}.tar.gz
+
+apply_patch()
+{
+  curl -O -L https://github.com/openssl/openssl/commit/da7947e8c6915d86616425ecbc4906f079ef122f.diff
+  curl -O -L https://github.com/openssl/openssl/commit/7107798ae6c5e19f581915928a69073d17cc21ab.diff
+  curl -O -L https://github.com/openssl/openssl/commit/83ab6e55a1f8de9b3e45d13dcc78eb739dc66dea.diff
+  patch -p1 < da7947e8c6915d86616425ecbc4906f079ef122f.diff
+  patch -p1 < 7107798ae6c5e19f581915928a69073d17cc21ab.diff
+  patch -p1 < 83ab6e55a1f8de9b3e45d13dcc78eb739dc66dea.diff
+}
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./Configure darwin64-x86_64-cc \
+    --prefix=$destdir \
+    --openssldir=$destdir/etc/openssl \
+    no-ssl2 zlib-dynamic shared \
+    enable-cms \
+    enable-ec_nistp_64_gcc_128
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make depend
+  make
+  popd
+}
+
+package()
+{
+  pushd $tmpdir/$srcdir
+  make install MANDIR=$destdir/share/man MANSUFFIX=ssl
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set OPENSSL_DIR $REPO/opt/openssl-$pkgver
+setenv OPENSSL_DIR \$OPENSSL_DIR
+
+prepend-path PATH \$OPENSSL_DIR/bin
+prepend-path PKG_CONFIG_PATH \$OPENSSL_DIR/lib/pkgconfig
+prepend-path MANPATH \$OPENSSL_DIR/share/man
+EOT)

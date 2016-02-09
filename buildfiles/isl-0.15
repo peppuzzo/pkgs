@@ -1,0 +1,15 @@
+# vim: set ft=sh:
+pkgname=isl
+pkgver=0.15
+pkgurl=http://isl.gforge.inria.fr/isl-${pkgver}.tar.xz
+
+module load gmp
+confopts="--with-gmp=system --with-gmp-prefix=$GMP_DIR"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set ISL_DIR $REPO/opt/isl-$pkgver
+setenv ISL_DIR \$ISL_DIR
+
+prepend-path PKG_CONFIG_PATH \$ISL_DIR/lib/pkgconfig
+EOT)

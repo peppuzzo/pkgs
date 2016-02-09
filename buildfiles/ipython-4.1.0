@@ -1,0 +1,95 @@
+# vim: set ft=sh:
+pkgname=ipython
+pkgver=4.1.0
+
+module load python
+
+prepare()
+{
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+}
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir
+  #pip install --install-option="--prefix=$destdir" -Iv $pkgname==$pkgver
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+  # setuptools_scm
+  curl -O -L https://pypi.python.org/packages/source/s/setuptools_scm/setuptools_scm-1.10.1.tar.bz2
+  tar xvfj setuptools_scm-1.10.1.tar.bz2
+  pushd setuptools_scm-1.10.1
+  python setup.py install --prefix=$destdir
+  popd
+  # path.py
+  curl -O -L https://pypi.python.org/packages/source/p/path.py/path.py-8.1.2.tar.gz
+  tar xvfz path.py-8.1.2.tar.gz
+  pushd path.py-8.1.2
+  python setup.py install --prefix=$destdir
+  popd
+  # decorator
+  curl -O -L https://pypi.python.org/packages/source/d/decorator/decorator-4.0.6.tar.gz
+  tar xvfz decorator-4.0.6.tar.gz
+  pushd decorator-4.0.6
+  python setup.py install --prefix=$destdir
+  popd
+  # ptyprocess
+  curl -O -L https://pypi.python.org/packages/source/p/ptyprocess/ptyprocess-0.5.1.tar.gz
+  tar xvfz ptyprocess-0.5.1.tar.gz
+  pushd ptyprocess-0.5.1
+  python setup.py install --prefix=$destdir
+  popd
+  # pickleshare
+  curl -O -L https://pypi.python.org/packages/source/p/pickleshare/pickleshare-0.6.tar.gz
+  tar xvfz pickleshare-0.6.tar.gz
+  pushd pickleshare-0.6
+  python setup.py install --prefix=$destdir
+  popd
+  # pexpect
+  curl -O -L https://pypi.python.org/packages/source/p/pexpect/pexpect-4.0.1.tar.gz
+  tar xvfz pexpect-4.0.1.tar.gz
+  pushd pexpect-4.0.1
+  python setup.py install --prefix=$destdir
+  popd
+  # ipython_genutils
+  curl -O -L https://github.com/ipython/ipython_genutils/archive/0.1.0.tar.gz
+  tar xvfz 0.1.0.tar.gz
+  pushd ipython_genutils-0.1.0
+  python setup.py install --prefix=$destdir
+  popd
+  # traitlets
+  curl -O -L https://github.com/ipython/traitlets/archive/4.1.0.tar.gz
+  tar xvfz 4.1.0.tar.gz
+  pushd traitlets-4.1.0
+  python setup.py install --prefix=$destdir
+  popd
+  # simplegeneric
+  curl -O -L https://pypi.python.org/packages/source/s/simplegeneric/simplegeneric-0.8.1.zip
+  unzip simplegeneric-0.8.1.zip
+  pushd simplegeneric-0.8.1
+  python setup.py install --prefix=$destdir
+  popd
+  # ipython
+  curl -O -L https://github.com/ipython/ipython/archive/rel-4.1.0.tar.gz
+  tar xvfz rel-4.1.0.tar.gz
+  pushd ipython-rel-4.1.0
+  python setup.py install --prefix=$destdir
+  popd
+  popd
+}
+
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load python
+set IPYTHON_DIR $REPO/opt/ipython-$pkgver
+
+prepend-path PATH \$IPYTHON_DIR/bin
+prepend-path MANPATH \$IPYTHON_DIR/share/man
+prepend-path PYTHONPATH \$IPYTHON_DIR/lib/python2.7/site-packages
+EOT)

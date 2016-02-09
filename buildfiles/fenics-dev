@@ -7,12 +7,10 @@ destdir=$REPO/opt/fenics-${pkgver}
 export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
 export PATH=$PATH:$destdir/bin
 
-module load openmpi hdf5
-module load python ipython matplotlib sympy swig
-module load cmake pkg-config
-module load boost vtk pastix cppunit mumps
-module load eigen suitesparse scotch metis parmetis
-module load petsc slepc
+module load openmpi hdf5 cmake pkg-config \
+            petsc/dev slepc/dev boost vtk pastix cppunit mumps \
+            eigen suitesparse scotch metis parmetis \
+            python ipython matplotlib sympy swig
 
 prepare()
 {
@@ -38,9 +36,10 @@ prepare()
       popd
     else
       git clone git@bitbucket.org:fenics-project/${fenicspkg}.git
-      if [[ ${fenicspkg} = "ffc" ]]; then
+      if [[ ${fenicspkg} == "ffc" ]]; then
         pushd ${fenicspkg}
         git apply $REPO/buildfiles/fenics_ffc_boost.patch
+        git apply $REPO/buildfiles/fenics_fcc_ufc_string.patch
         popd
       fi
     fi
@@ -95,7 +94,7 @@ module load python ipython matplotlib sympy swig numpy scipy
 module load cmake pkg-config
 module load boost vtk
 module load eigen suitesparse scotch metis parmetis
-module load petsc slepc
+module load petsc/dev slepc/dev gmsh/dev
 
 set FENICS_DIR $REPO/opt/fenics-$pkgver
 

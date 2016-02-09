@@ -3,9 +3,7 @@ pkgname=mpi4py
 pkgver=dev
 pkgurl=git@bitbucket.org:mpi4py/mpi4py.git
 
-module load openmpi
-module load python
-module load cython
+module load openmpi python cython
 
 configure() { :; }
 build() { :; }

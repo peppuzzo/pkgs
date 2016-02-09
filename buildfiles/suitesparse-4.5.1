@@ -1,0 +1,51 @@
+# vim: set ft=sh:
+pkgname=suitesparse
+pkgver=4.5.1
+baseurl=http://faculty.cse.tamu.edu/davis/SuiteSparse
+pkgurl=${baseurl}/SuiteSparse-${pkgver}.tar.gz
+srcdir=Suitesparse
+
+module load metis
+
+#apply_patch()
+#{
+  # METIS 5.x
+#  patch -Np1 -i $REPO/buildfiles/suitesparse-metis5.patch
+#  patch -Np1 -i $REPO/buildfiles/suitesparse-metis_path.patch
+#}
+
+configure() { :; }
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make \
+    MY_METIS_LIB="-L${METIS_DIR}/lib -lmetis" \
+    MY_METIS_INC=${METIS_DIR}/include \
+    CUDA=no \
+    go
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $tmpdir/$srcdir
+  mkdir -pv $destdir/{include,lib}
+  make \
+    MY_METIS_LIB="-L${METIS_DIR}/lib -lmetis" \
+    MY_METIS_INC=${METIS_DIR}/include \
+    CUDA=no \
+    INSTALL_LIB=$destdir/lib \
+    INSTALL_INCLUDE=$destdir/include \
+    install
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SUITESPARSE_DIR $REPO/opt/suitesparse-$pkgver
+setenv SUITESPARSE_DIR \$SUITESPARSE_DIR
+EOT)

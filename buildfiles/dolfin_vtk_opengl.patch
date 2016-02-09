@@ -1,26 +1,45 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1e5c15b..d9d5277 100644
+index 82e32df..cd1fe8e 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -602,7 +602,7 @@ endif()
+@@ -586,7 +586,7 @@ endif()
  # Check for VTK
  if (DOLFIN_ENABLE_VTK)
    find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
 -    vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
 +    vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
      NO_MODULE)
-   set(VTK_VERSION "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
-   if (VTK_FOUND)
-diff --git a/cmake/templates/UseDOLFIN.cmake.in b/cmake/templates/UseDOLFIN.cmake.in
-index e6f7276..8995478 100644
---- a/cmake/templates/UseDOLFIN.cmake.in
-+++ b/cmake/templates/UseDOLFIN.cmake.in
-@@ -13,7 +13,7 @@ if (NOT DOLFIN_USE_FILE_INCLUDED)
-   # http://www.vtk.org/pipermail/vtk-developers/2013-October/014402.html
-   if (@VTK_FOUND@)
+
+   # For VTK < 6.3, vtkRenderingFreeTypeOpenGL module is required, so
+@@ -594,8 +594,8 @@ if (DOLFIN_ENABLE_VTK)
+   # 6.3)
+   if(TARGET vtkRenderingFreeTypeOpenGL)
      find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
 -      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
+-      vtkRenderingFreeTypeOpenGL NO_MODULE)
 +      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
-       NO_MODULE QUIET)
-     if (VTK_FOUND)
-       include(${VTK_USE_FILE})
++      vtkRenderingFreeTypeOpenGL2 NO_MODULE)
+   endif()
+
+   set(VTK_VERSION "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
+   diff --git a/cmake/templates/UseDOLFIN.cmake.in b/cmake/templates/UseDOLFIN.cmake.in
+   index 1dec1c3..60e165b 100644
+   --- a/cmake/templates/UseDOLFIN.cmake.in
+   +++ b/cmake/templates/UseDOLFIN.cmake.in
+   @@ -13,15 +13,15 @@ if (NOT DOLFIN_USE_FILE_INCLUDED)
+      # http://www.vtk.org/pipermail/vtk-developers/2013-October/014402.html
+      if (@VTK_FOUND@)
+        find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
+   -      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
+   +      vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
+          NO_MODULE QUIET)
+
+          # Earlier versions of VTK need vtkRenderingFreeTypeOpenGL, but
+          # this was removed from VTK 6.3
+          if(TARGET vtkRenderingFreeTypeOpenGL)
+            find_package(VTK HINTS ${VTK_DIR} $ENV{VTK_DIR} COMPONENTS vtkViewsCore
+   -          vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL
+   -          vtkRenderingFreeTypeOpenGL NO_MODULE QUIET)
+   +          vtkRenderingCore vtkRenderingLabel vtkFiltersTexture vtkRenderingOpenGL2
+   +          vtkRenderingFreeTypeOpenGL2 NO_MODULE QUIET)
+          endif()

@@ -1,0 +1,12 @@
+diff --git a/ufc/ufc.i b/ufc/ufc.i
+index ddd3e76..8a1eedb 100644
+--- a/ufc/ufc.i
++++ b/ufc/ufc.i
+@@ -3,6 +3,7 @@
+ %{
+ #include "ufc.h"
+ #include <memory>
++#include <string>
+ %}
+
+ // Use std::shared_ptr

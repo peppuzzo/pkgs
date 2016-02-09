@@ -1,0 +1,64 @@
+# vim: set ft=sh:
+pkgname=boost
+pkgver=1.60.0
+_baseurl=https://downloads.sourceforge.net/project/boost/boost
+pkgurl=${_baseurl}/$pkgver/boost_${pkgver//./_}.tar.bz2
+srcdir=boost_${pkgver//./_}
+
+apply_patch()
+{
+  patch -Np1 < $REPO/buildfiles/boost_adjmatrix.patch
+}
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./bootstrap.sh \
+    --prefix=$destdir \
+    --libdir=$destdir/lib \
+    --without-icu \
+    --without-libraries=python,log,mpi
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  ./b2 headers
+  ./b2 --prefix=$destdir \
+    --libdir=$destdir/lib \
+    -d2 \
+    -j8 \
+    variant=release \
+    link=static,shared \
+    --layout=tagged \
+    install
+  popd
+}
+
+pre_package() { :; }
+package() { :; }
+
+post_package()
+{
+  # change install name to absolute path
+  pushd $destdir/lib
+  for f in `ls -1 *.dylib`; do
+    echo $f
+    # grep the dependencies and skip empty lines
+    for ll in `otool -L $f | perl -ne '/\t(:?libboost.*.dylib)/g; print "$1\n"' | sed '/^$/d' | uniq | tail -n+2`; do
+      echo "   $ll"
+      install_name_tool -change $ll $destdir/lib/$ll $f
+    done
+    install_name_tool -id $destdir/lib/$f $f
+  done
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set BOOST_DIR $REPO/opt/boost-$pkgver
+setenv BOOST_DIR \$BOOST_DIR
+
+prepend-path PATH \$BOOST_DIR/bin
+EOT)

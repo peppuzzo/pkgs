@@ -1,13 +1,13 @@
 # vim: filetype=sh
 pkgname=vtk
-pkgver=6.3.0
+pkgver=7.0.0
 pkgurl=http://www.vtk.org/files/release/${pkgver:0:3}/VTK-${pkgver}.tar.gz
 srcdir=VTK-$pkgver
 destdir=$REPO/opt/$pkgname-$pkgver
 
 export USE_CMAKE=1
 module load freetype libxml2 libpng python scipy matplotlib mpi4py \
-            openmpi hdf5 netcdf netcdf-cxx cmake boost
+            openmpi hdf5 netcdf netcdf-cxx/4.2 cmake boost
 
 export CXX=mpic++
 export CC=mpicc

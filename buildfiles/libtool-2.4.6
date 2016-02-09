@@ -1,0 +1,13 @@
+# vim: set ft=sh:
+pkgname=libtool
+pkgver=2.4.6
+pkgurl=http://ftpmirror.gnu.org/libtool/libtool-${pkgver}.tar.gz
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set LIBTOOL_DIR $REPO/opt/libtool-$pkgver
+
+prepend-path PATH \$LIBTOOL_DIR/bin
+prepend-path MANPATH \$LIBTOOL_DIR/share/man
+prepend-path INFOPATH \$LIBTOOL_DIR/share/info
+EOT)

@@ -1,8 +1,8 @@
 # vim: set ft=sh:
 pkgname=matplotlib
-pkgver=1.5.0
+pkgver=1.5.1
 
-module load pkg-config freetype libpng cython gcc numpy scipy
+module load pkg-config freetype libpng python cython gcc numpy scipy
 
 prepare()
 {
@@ -38,9 +38,9 @@ package()
   python setup.py install --prefix=$destdir
   popd
   # pyparsing
-  curl -O -L https://pypi.python.org/packages/source/p/pyparsing/pyparsing-2.0.6.tar.gz
-  tar xvfz pyparsing-2.0.6.tar.gz
-  pushd pyparsing-2.0.6
+  curl -O -L https://pypi.python.org/packages/source/p/pyparsing/pyparsing-2.0.7.tar.gz
+  tar xvfz pyparsing-2.0.7.tar.gz
+  pushd pyparsing-2.0.7
   python setup.py install --prefix=$destdir
   popd
   # cycler
@@ -56,9 +56,9 @@ package()
   python setup.py install --prefix=$destdir
   popd
   # certifi
-  curl -O -L https://pypi.python.org/packages/source/c/certifi/certifi-2015.11.20.tar.gz
-  tar xvfz certifi-2015.11.20.tar.gz
-  pushd certifi-2015.11.20
+  curl -O -L https://pypi.python.org/packages/source/c/certifi/certifi-2015.11.20.1.tar.gz
+  tar xvfz certifi-2015.11.20.1.tar.gz
+  pushd certifi-2015.11.20.1
   python setup.py install --prefix=$destdir
   popd
   # tornado
@@ -68,9 +68,9 @@ package()
   python setup.py install --prefix=$destdir
   popd
   # matplotlib
-  curl -O -L https://pypi.python.org/packages/source/m/matplotlib/matplotlib-1.5.0.tar.gz
-  tar xvfz matplotlib-1.5.0.tar.gz
-  pushd matplotlib-1.5.0
+  curl -O -L https://pypi.python.org/packages/source/m/matplotlib/matplotlib-${pkgver}.tar.gz
+  tar xvfz matplotlib-${pkgver}.tar.gz
+  pushd matplotlib-${pkgver}
   python setup.py build
   python setup.py install --prefix=$destdir
   popd

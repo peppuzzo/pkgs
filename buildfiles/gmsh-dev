@@ -1,9 +1,8 @@
 # vim: set ft=sh:
 pkgname=gmsh
-pkgver=2.11.0
-pkgurl=http://www.geuz.org/gmsh/src/gmsh-${pkgver}-source.tgz
+pkgver=dev
 destdir=$REPO/opt/$pkgname-$pkgver
-srcdir=$pkgname-$pkgver-source
+srcdir=gmsh
 
 export USE_CMAKE=1
 export MAKE_NUMJOBS=8
@@ -16,8 +15,8 @@ module load openmpi
 module load fltk
 module load opencascade
 module load hdf5
-module load petsc/3.6.3
-module load slepc/3.6.2
+module load petsc
+module load slepc
 
 confopts=$(cat <<-EOT
 -D CMAKE_SYSTEM_PREFIX_PATH=$LIBJPEG_DIR
@@ -37,6 +36,26 @@ confopts=$(cat <<-EOT
 -D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
 -Wno-dev
 EOT)
+
+prepare()
+{
+  if [ -d $destdir ]; then
+    rm -rf $destdir
+  fi
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+  pushd $tmpdir
+  if [[ -d gmsh ]]; then
+    pushd gmsh
+    svn update
+    popd
+  else
+    svn co https://onelab.info/svn/gmsh/trunk gmsh
+  fi
+  popd
+}
 
 pkgmodule=$(cat <<-EOT
 #%Module

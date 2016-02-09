@@ -4,7 +4,7 @@ pkgver=4.2.1
 pkgurl=https://github.com/Unidata/netcdf-cxx4/archive/v${pkgver}.tar.gz
 srcdir=netcdf-cxx4-${pkgver}
 
-module load netcdf
+module load openmpi hdf5 netcdf
 
 export CC=mpicc
 export FC=mpif90

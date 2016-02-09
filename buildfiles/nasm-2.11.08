@@ -1,0 +1,35 @@
+# vim: set ft=sh:
+pkgname=nasm
+pkgver=2.11.08
+pkgurl=http://www.nasm.us/pub/nasm/releasebuilds/${pkgver}/nasm-${pkgver}.tar.xz
+
+module load pkg-config
+
+# NOTE out-of-source compilation does not work
+configure()
+{
+  pushd $tmpdir/$srcdir
+  ./configure --prefix=$destdir
+  popd
+}
+build()
+{
+  pushd $tmpdir/$srcdir
+  make
+  popd
+}
+package()
+{
+  pushd $tmpdir/$srcdir
+  make install
+  popd
+}
+
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set NASM_DIR $REPO/opt/$pkgname-$pkgver
+
+prepend-path PATH \$NASM_DIR/bin
+prepend-path MANPATH \$NASM_DIR/share/man
+EOT)

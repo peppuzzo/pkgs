@@ -1,13 +1,10 @@
 # vim: set ft=sh:
 pkgname=slepc
-pkgver=3.6.2
-slepc4pyver=3.6.0
-pkgurl=http://www.grycap.upv.es/slepc/download/distrib/slepc-$pkgver.tar.gz
+pkgver=dev
+pkgurl=git@bitbucket.org:slepc/slepc.git
 
 unset SLEPC_DIR
-module load openmpi arpack-ng
-module load petsc/3.6.3
-echo $PETSC_DIR
+module load openmpi arpack-ng petsc/dev python cython numpy mpi4py
 
 configure()
 {
@@ -22,7 +19,7 @@ configure()
 build()
 {
   pushd $tmpdir/$srcdir
-  make SLEPC_DIR=$PWD PETSC_DIR=$PETSC_DIR
+  make SLEPC_DIR=$PWD
   popd
 }
 
@@ -30,17 +27,22 @@ package()
 {
   pushd $tmpdir/$srcdir
   # install new one
-  make SLEPC_DIR=$tmpdir/$srcdir PETSC_DIR=$PETSC_DIR install
+  make SLEPC_DIR=$tmpdir/$srcdir install
   popd
 }
 
 post_package()
 {
-  # petsc4py
+  # slepc4py
   pushd $tmpdir
-  curl -O -L https://bitbucket.org/slepc/slepc4py/downloads/slepc4py-${slepc4pyver}.tar.gz
-  tar xvfz slepc4py-${slepc4pyver}.tar.gz
-  pushd slepc4py-${slepc4pyver}
+  if [[ -d slepc4py ]]; then
+    pushd slepc4py
+    git pull
+    popd
+  else
+    git clone git@bitbucket.org:slepc/slepc4py.git
+  fi
+  pushd slepc4py
   export SLEPC_DIR=$destdir
   python setup.py install --prefix=$destdir
   popd
@@ -49,7 +51,7 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-module load petsc/3.6.3
+module load petsc/dev
 set SLEPC_DIR $REPO/opt/slepc-$pkgver
 setenv SLEPC_DIR \$SLEPC_DIR
 
