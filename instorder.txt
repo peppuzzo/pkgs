@@ -16,6 +16,7 @@ python
 libxml2
 libpng
 freetype
+nasm
 pixman
 cairo
 hwloc
@@ -43,6 +44,7 @@ mpi4py
 numpy
 nose
 scipy
+ipython
 
 petsc
 slepc
@@ -53,5 +55,5 @@ netcdf
 netcdf-cxx
 vtk
 eigen
+gmsh
 fenics
-

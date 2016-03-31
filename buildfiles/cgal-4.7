@@ -1,0 +1,23 @@
+# vim: set ft=sh:
+pkgname=cgal
+pkgver=4.7
+baseurl=https://github.com/CGAL/cgal/releases/download
+pkgurl=$baseurl/releases%2FCGAL-$pkgver/CGAL-$pkgver.tar.xz
+srcdir=CGAL-$pkgver
+
+export USE_CMAKE=1
+module load pkg-config cmake boost eigen gmp mpfr
+
+confopts=$(cat <<-EOT
+-D CMAKE_BUILD_TYPE:STRING=Release
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+EOT)
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set CGAL_DIR $REPO/opt/cgal-$pkgver
+setenv CGAL_DIR \$CGAL_DIR
+EOT)

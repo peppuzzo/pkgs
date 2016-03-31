@@ -1,0 +1,21 @@
+# vim: set ft=sh:
+pkgname=mpfr
+pkgver=3.1.4
+pkgurl=https://ftp.gnu.org/gnu/mpfr/mpfr-${pkgver}.tar.xz
+
+module load gmp
+confopts="--enable-thread-safe --enable-shared --with-gmp=$GMP_DIR"
+
+#apply_patch()
+#{
+#  curl -O -L http://www.mpfr.org/mpfr-current/allpatches
+#  patch -N -Z -p1 < allpatches
+#}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set MPFR_DIR $REPO/opt/mpfr-$pkgver
+setenv MPFR_DIR \$MPFR_DIR
+
+prepend-path INFOPATH \$MPFR_DIR/share/info
+EOT)

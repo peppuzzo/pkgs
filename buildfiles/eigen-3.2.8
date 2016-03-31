@@ -1,0 +1,25 @@
+# vim: set ft=sh:
+pkgname=eigen
+pkgver=3.2.8
+pkgurl=https://bitbucket.org/eigen/eigen/get/${pkgver}.tar.bz2
+destdir=$REPO/opt/$pkgname-$pkgver
+srcdir=eigen-eigen-07105f7124f9
+
+export USE_CMAKE=1
+module load pkg-config cmake gcc
+
+confopts=$(cat <<-EOT
+-D CMAKE_BUILD_TYPE:STRING=Release
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
+-D CMAKE_SKIP_BUILD_RPATH:BOOL=OFF
+-D CMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib
+EOT)
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set EIGEN_DIR $REPO/opt/eigen-$pkgver
+setenv EIGEN_DIR \$EIGEN_DIR
+
+prepend-path PKG_CONFIG_PATH \$EIGEN_DIR/lib/pkgconfig
+EOT)

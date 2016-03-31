@@ -1,0 +1,27 @@
+# vim: set ft=sh:
+pkgname=cython
+pkgver=0.23.5
+pkgurl=http://cython.org/release/Cython-${pkgver}.tar.gz
+
+module load python
+
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set CYTHON_DIR $REPO/opt/cython-$pkgver
+setenv CYTHON_DIR \$CYTHON_DIR
+
+prepend-path PATH \$CYTHON_DIR/bin
+prepend-path PYTHONPATH \$CYTHON_DIR/lib/python2.7/site-packages
+EOT)

@@ -7,7 +7,7 @@ unset PETSC_DIR
 unset PETSC_ARCH
 module load hwloc openmpi hdf5 \
             metis parmetis suitesparse \
-            superlu superlu_dist scalapack \
+            superlu superlu_dist/5.0.0 scalapack \
             pastix mumps hypre scotch \
             python cython numpy mpi4py
 

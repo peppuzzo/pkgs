@@ -1,0 +1,43 @@
+# vim: set ft=sh:
+pkgname=sympy
+pkgver=1.0
+pkgurl=https://pypi.python.org/packages/source/s/sympy/sympy-1.0.tar.gz
+
+module load gcc python cython numpy
+
+prepare()
+{
+  if [ -d $tmpdir ]; then
+    rm -rf $tmpdir
+  fi
+  mkdir -pv $tmpdir
+}
+configure() { :; }
+build() { :; }
+package()
+{
+  rm -rf $tmpdir/*
+  pushd $tmpdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+  # mpmath
+  curl -O -L https://pypi.python.org/packages/source/m/mpmath/mpmath-0.19.tar.gz
+  tar xvfz mpmath-0.19.tar.gz
+  pushd mpmath-0.19
+  python setup.py install --prefix=$destdir
+  popd
+  # sympy
+  curl -O -L https://pypi.python.org/packages/source/s/sympy/sympy-${pkgver}.tar.gz
+  tar xvfz sympy-${pkgver}.tar.gz
+  pushd sympy-${pkgver}
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SYMPY_DIR $REPO/opt/sympy-$pkgver
+
+prepend-path PYTHONPATH \$SYMPY_DIR/lib/python2.7/site-packages
+EOT)

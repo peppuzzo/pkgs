@@ -1,0 +1,31 @@
+Index: Solver/linearSystemPETSc.hpp
+===================================================================
+--- Solver/linearSystemPETSc.hpp	(revision 22904)
++++ Solver/linearSystemPETSc.hpp	(working copy)
+@@ -20,7 +20,7 @@
+ {
+   // Set option given by the user in its (python script) without using argc,argv or .petscrc
+   if(this->_parameters.count("petsc_solver_options"))
+-    _try(PetscOptionsInsertString(this->_parameters["petsc_solver_options"].c_str()));
++    _try(PetscOptionsInsertString(PETSC_NULL,this->_parameters["petsc_solver_options"].c_str()));
+   _try(KSPCreate(_comm, &_ksp));
+   PC pc;
+   _try(KSPGetPC(_ksp, &pc));
+@@ -117,7 +117,7 @@
+   if (_sparsity.getNbRows() == 0) {
+     PetscInt prealloc = 500;
+     PetscBool set;
+-    PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
++    PetscOptionsGetInt(PETSC_NULL, PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
+     prealloc = std::min(prealloc, _localSize);
+     nByRowDiag.resize(0);
+     nByRowDiag.resize(_localSize, prealloc);
+@@ -174,7 +174,7 @@
+   // override the default options with the ones from the option
+   // database (if any)
+   if (this->_parameters.count("petscOptions"))
+-    _try(PetscOptionsInsertString(this->_parameters["petscOptions"].c_str()));
++    _try(PetscOptionsInsertString(PETSC_NULL,this->_parameters["petscOptions"].c_str()));
+   if (this->_parameters.count("petscPrefix"))
+     _try(MatAppendOptionsPrefix(_a, this->_parameters["petscPrefix"].c_str()));
+   _try(MatSetFromOptions(_a));

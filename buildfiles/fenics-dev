@@ -1,8 +1,7 @@
 # vim: set ft=sh:
 pkgname=fenics
 pkgver=dev
-srcdir=$tmpdir/dolfin
-destdir=$REPO/opt/fenics-${pkgver}
+srcdir=dolfin
 
 export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
 export PATH=$PATH:$destdir/bin
@@ -14,22 +13,23 @@ module load openmpi hdf5 cmake pkg-config \
 
 prepare()
 {
+  # we install dolfin dependencies here
   if [ -d $destdir ]; then
     rm -rf $destdir
   fi
+  mkdir -pv $destdir/lib/python2.7/site-packages
   if [ -d $tmpdir ]; then
     rm -rf $tmpdir
   fi
   mkdir -pv $tmpdir
   pushd $tmpdir
-  mkdir -pv $destdir/lib/python2.7/site-packages
   # ply
   curl -O -L http://www.dabeaz.com/ply/ply-3.8.tar.gz
   tar xvfz ply-3.8.tar.gz
   pushd ply-3.8
   python setup.py install --prefix=$destdir
   popd
-  for fenicspkg in "ufl" "uflacs" "fiat" "instant" "ffc"; do
+  for fenicspkg in "ufl" "fiat" "instant" "ffc"; do
     if [[ -d $fenicspkg ]]; then
       pushd $fenicspkg
       git pull
@@ -38,8 +38,8 @@ prepare()
       git clone git@bitbucket.org:fenics-project/${fenicspkg}.git
       if [[ ${fenicspkg} == "ffc" ]]; then
         pushd ${fenicspkg}
-        git apply $REPO/buildfiles/fenics_ffc_boost.patch
-        git apply $REPO/buildfiles/fenics_fcc_ufc_string.patch
+        #git apply $REPO/buildfiles/fenics_ffc_boost.patch
+        #git apply $REPO/buildfiles/fenics_ffc_ufc_string.patch
         popd
       fi
     fi
@@ -57,7 +57,7 @@ prepare()
     pushd dolfin
     patch -Np1 < $REPO/buildfiles/dolfin_find_metis.patch
     patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-    git apply $REPO/buildfiles/dolfin_vtk_opengl.patch
+    #git apply $REPO/buildfiles/dolfin_vtk_opengl.patch
     popd
   fi
   popd
@@ -65,8 +65,6 @@ prepare()
 
 configure()
 {
-  # create a build directory and
-  # run the configure script
   [[ -d $builddir ]] && rm -rf $builddir
   mkdir $builddir
   pushd $builddir

@@ -1,0 +1,82 @@
+# vim: set ft=sh:
+pkgname=superlu_dist
+pkgver=5.0.0
+pkgurl=https://github.com/xiaoyeli/superlu_dist.git
+srcdir=SuperLU_DIST_$pkgver
+
+module load openmpi parmetis metis
+
+configure()
+{
+  pushd $tmpdir/$srcdir
+  cat <<EOF > make.inc
+DSuperLUroot = $tmpdir/$srcdir
+DSUPERLULIB  = \$(DSuperLUroot)/libsuperlu_dist.a
+
+BLASDEF   = -DUSE_VENDOR_BLAS
+BLASLIB   = -framework Accelerate
+
+PARMETIS_DIR  = $PARMETIS_DIR
+METISLIB      = -L$METIS_DIR/lib -lmetis
+PARMETISLIB   = -L$PARMETIS_DIR/lib -lparmetis
+I_PARMETIS    = -I$PARMETIS_DIR/include -I$METIS_DIR/include
+
+FLIBS   =
+LIBS    = \$(DSUPERLULIB) \$(BLASLIB) \$(PARMETISLIB) \$(METISLIB)
+
+ACC       =
+CUDAFLAGS =
+CUDALIB   =
+
+ARCH         = ar
+ARCHFLAGS    = cr
+RANLIB       = echo
+
+CC           = mpicc
+CFLAGS       = -O3 -DDEBUGlevel=0 -DPRNTlevel=1 -fPIC \$(I_PARMETIS)
+NOOPTS       = -O0 -fPIC
+FORTRAN      = mpif90
+FFLAGS       = -O3 -fPIC
+LOADER       = \$(CC)
+LOADOPTS     =
+CDEFS        = -DAdd_
+EOF
+  popd
+}
+
+build()
+{
+  pushd $tmpdir/$srcdir
+  make cleanlib
+  make lib
+  popd
+}
+
+testing()
+{
+  pushd $tmpdir/$srcdir/EXAMPLE
+  make
+  mpirun -np 2 pddrive -r 2 -c 1 g20.rua
+  mpirun -np 2 pzdrive -r 2 -c 1 cg20.cua
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install manually
+  install -d ${destdir}/lib
+  install -m 755 $tmpdir/${srcdir}/libsuperlu_dist.a ${destdir}/lib
+  install -d $destdir/include
+  install -m 644 $tmpdir/$srcdir/SRC/*.h $destdir/include
+  rm -v $destdir/include/{html_mainpage,old_colamd}.h
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set SUPERLUDIST_DIR $REPO/opt/superlu_dist-$pkgver
+setenv SUPERLUDIST_DIR \$SUPERLUDIST_DIR
+
+prepend-path PATH \$SUPERLUDIST_DIR/bin
+EOT)

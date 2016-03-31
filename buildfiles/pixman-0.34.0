@@ -1,0 +1,18 @@
+# vim: set ft=sh:
+pkgname=pixman
+pkgver=0.34.0
+pkgurl=http://xorg.freedesktop.org/releases/individual/lib/pixman-${pkgver}.tar.bz2
+
+module load pkg-config
+module load libpng
+# NOTE remove when pixman 0.34 is out (fix in master)
+#confopts="--disable-mmx"
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set PIXMAN_DIR $REPO/opt/pixman-$pkgver
+setenv PIXMAN_DIR \$PIXMAN_DIR
+
+prepend-path MANPATH \$PIXMAN_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$PIXMAN_DIR/lib/pkgconfig
+EOT)

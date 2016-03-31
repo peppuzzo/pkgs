@@ -128,13 +128,14 @@ if [ ! -f $pkgsource ]; then
   exit
 fi
 
+# define variables
+tmpdir=$REPO/src/$(basename "$pkgsource")
+destdir=$REPO/opt/$(basename "$pkgsource")
+
 # source the content
 # this will override functions defined here
 source $pkgsource
 
-# define variables
-tmpdir=$REPO/src/$pkgname-$pkgver
-destdir=$REPO/opt/$pkgname-$pkgver
 if [ -z ${srcdir+x} ]; then
   srcdir=$pkgname-$pkgver
 fi
