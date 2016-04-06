@@ -57,10 +57,9 @@ prepare()
     pushd dolfin
     patch -Np1 < $REPO/buildfiles/dolfin_find_metis.patch
     patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-    #git apply $REPO/buildfiles/dolfin_vtk_opengl.patch
+    git apply $REPO/buildfiles/dolfin_petsc_monitor.patch
     popd
   fi
-  popd
 }
 
 configure()
@@ -84,11 +83,54 @@ configure()
 }
 pre_package() { :; }
 
+post_package()
+{
+  pushd $tmpdir
+  # libadjoint
+  if [[ -d libadjoint ]]; then
+    pushd libadjoint
+    git pull
+    popd
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/libadjoint.git
+  fi
+  pushd libadjoint
+  [[ -d build ]] && rm -rf build
+  mkdir -pv build && cd build
+  cmake \
+    -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF \
+    -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF \
+    -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib \
+    -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
+    ../
+  make install
+  popd
+  # dolfin-adjoint
+  if [[ -d dolfin-adjoint ]]; then
+    git -C dolfin-adjoint pull
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git
+  fi
+  pushd dolfin-adjoint
+  python setup.py install --prefix=$destdir
+  popd
+  # moola
+  if [[ -d moola ]]; then
+    git -C moola pull
+  else
+    git clone https://github.com/funsim/moola.git
+  fi
+  pushd moola
+  python setup.py install --prefix=$destdir
+  popd
+  popd
+}
+
 pkgmodule=$(cat <<-EOT
 #%Module
 # several modules are required for instant compilation
 module load openmpi hdf5
-module load python ipython matplotlib sympy swig numpy scipy
+module load python ipython matplotlib sympy swig numpy scipy ipopt
 module load cmake pkg-config
 module load boost vtk
 module load eigen suitesparse scotch metis parmetis

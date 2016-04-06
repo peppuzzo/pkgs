@@ -1,0 +1,44 @@
+# vim: set ft=sh:
+pkgname=ipopt
+pkgver=3.12.4
+pkgurl=http://www.coin-or.org/download/source/Ipopt/Ipopt-${pkgver}.tgz
+srcdir=Ipopt-${pkgver}
+
+module load gcc openmpi mumps
+
+export CXX=mpicxx
+export CC=mpicc
+export LDFLAGS="-L$MUMPS_DIR/lib -ldmumps"
+confopts="--with-mumps-incdir=$MUMPS_DIR/include --without-dot"
+
+post_package()
+{
+  # petsc4py
+  pushd $tmpdir
+  if [[ -d pyipopt ]]; then
+    git -C pyipopt pull
+  else
+    git clone http://github.com/xuy/pyipopt.git
+  fi
+  pushd pyipopt
+  # remove hardcoded path
+  sed -i ".original" "s;IPOPT_DIR = '/usr/local/';IPOPT_DIR = '$destdir';g" setup.py
+  python setup.py install --prefix=$destdir
+  # fix libraries
+  for nolib in coinblas coinlapack coinmumps coinhsl coinmetis; do
+    sed -i ".original" "s;$nolib;ipopt;g" setup.py
+  done
+  popd
+  popd
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+module load python numpy mpi4py
+
+set IPOPT_DIR $REPO/opt/ipopt-$pkgver
+setenv IPOPT_DIR \$IPOPT_DIR
+
+prepend-path PKG_CONFIG_PATH \$IPOPT_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$IPOPT_DIR/lib/python2.7/site-packages
+EOT)

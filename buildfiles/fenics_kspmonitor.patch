@@ -1,0 +1,107 @@
+diff --git a/dolfin/la/PETScKrylovSolver.cpp b/dolfin/la/PETScKrylovSolver.cpp
+index 6c66953..2507873 100644
+--- a/dolfin/la/PETScKrylovSolver.cpp
++++ b/dolfin/la/PETScKrylovSolver.cpp
+@@ -451,9 +451,10 @@ void PETScKrylovSolver::monitor(bool monitor_convergence)
+   PetscErrorCode ierr;
+   if (monitor_convergence)
+   {
+-    ierr = KSPMonitorSet(_ksp, KSPMonitorTrueResidualNorm,
+-                         PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_ksp)),
+-                         NULL);
++    ierr = KSPMonitorSet(_ksp,
++        (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorTrueResidualNorm,
++        PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_ksp)),
++        NULL);
+     if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+   }
+   else
+diff --git a/dolfin/la/SLEPcEigenSolver.cpp b/dolfin/la/SLEPcEigenSolver.cpp
+index 6967ce7..bba80d9 100644
+--- a/dolfin/la/SLEPcEigenSolver.cpp
++++ b/dolfin/la/SLEPcEigenSolver.cpp
+@@ -113,14 +113,16 @@ void SLEPcEigenSolver::solve(std::size_t n)
+   {
+     KSP ksp;
+     ST st;
+-    EPSMonitorSet(_eps, EPSMonitorAll,
+-                  PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_eps)),
+-                  NULL);
++    EPSMonitorSet(_eps,
++      (PetscErrorCode (*)(EPS,PetscInt,PetscInt,PetscScalar*,PetscScalar*,PetscReal*,PetscInt,void*))EPSMonitorAll,
++      PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_eps)),
++      NULL);
+     EPSGetST(_eps, &st);
+     STGetKSP(st, &ksp);
+-    KSPMonitorSet(ksp, KSPMonitorDefault,
+-                  PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+-                  NULL);
++    KSPMonitorSet(ksp,
++      (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorDefault,
++      PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
++      NULL);
+     EPSView(_eps, PETSC_VIEWER_STDOUT_SELF);
+   }
+ 
+diff --git a/dolfin/nls/PETScSNESSolver.cpp b/dolfin/nls/PETScSNESSolver.cpp
+index 9cf89f4..52a7cb0 100644
+--- a/dolfin/nls/PETScSNESSolver.cpp
++++ b/dolfin/nls/PETScSNESSolver.cpp
+@@ -216,7 +216,8 @@ PETScSNESSolver::init(NonlinearProblem& nonlinear_problem,
+   // Set some options from the parameters
+   if (report)
+   {
+-    SNESMonitorSet(_snes, SNESMonitorDefault,
++    SNESMonitorSet(_snes,
++      (PetscErrorCode (*)(SNES,PetscInt,PetscReal,void*))SNESMonitorDefault,
+                    PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_snes)),
+                    NULL);
+   }
+@@ -421,7 +422,8 @@ void PETScSNESSolver::set_linear_solver_parameters()
+ 
+   if (parameters["report"])
+   {
+-    KSPMonitorSet(ksp, KSPMonitorDefault,
++    KSPMonitorSet(ksp,
++      (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorDefault,
+                    PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+                    NULL);
+   }
+@@ -456,7 +458,8 @@ void PETScSNESSolver::set_linear_solver_parameters()
+ 
+     if (krylov_parameters["monitor_convergence"])
+     {
+-      KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
++      KSPMonitorSet(ksp,
++      (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorTrueResidualNorm,
+                        PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+                        NULL);
+     }
+diff --git a/dolfin/nls/PETScTAOSolver.cpp b/dolfin/nls/PETScTAOSolver.cpp
+index c347a40..51976a5 100644
+--- a/dolfin/nls/PETScTAOSolver.cpp
++++ b/dolfin/nls/PETScTAOSolver.cpp
+@@ -559,7 +559,8 @@ void PETScTAOSolver::set_ksp_options()
+     {
+       if (krylov_parameters["monitor_convergence"])
+       {
+-        ierr = KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
++        ierr = KSPMonitorSet(ksp,
++            (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorTrueResidualNorm,
+                              PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+                              NULL);
+         if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+diff --git a/dolfin/nls/TAOLinearBoundSolver.cpp b/dolfin/nls/TAOLinearBoundSolver.cpp
+index 8fc8d5f..8cc57c5 100644
+--- a/dolfin/nls/TAOLinearBoundSolver.cpp
++++ b/dolfin/nls/TAOLinearBoundSolver.cpp
+@@ -425,7 +425,8 @@ void TAOLinearBoundSolver::set_ksp_options()
+     {
+       if (krylov_parameters["monitor_convergence"])
+       {
+-        ierr = KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
++        ierr = KSPMonitorSet(ksp,
++      (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorTrueResidualNorm,
+                              PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)), NULL);
+         if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+       }

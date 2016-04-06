@@ -1,0 +1,183 @@
+diff --git a/dolfin/la/PETScKrylovSolver.cpp b/dolfin/la/PETScKrylovSolver.cpp
+index 6c66953..dae7777 100644
+--- a/dolfin/la/PETScKrylovSolver.cpp
++++ b/dolfin/la/PETScKrylovSolver.cpp
+@@ -451,9 +451,15 @@ void PETScKrylovSolver::monitor(bool monitor_convergence)
+   PetscErrorCode ierr;
+   if (monitor_convergence)
+   {
+-    ierr = KSPMonitorSet(_ksp, KSPMonitorTrueResidualNorm,
+-                         PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_ksp)),
+-                         NULL);
++    PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_ksp));
++    PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++    PetscViewerAndFormat *vf;
++    PetscViewerAndFormatCreate(viewer,format,&vf);
++    PetscObjectDereference((PetscObject)viewer);
++    ierr = KSPMonitorSet(_ksp,
++                         (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*)) KSPMonitorTrueResidualNorm,
++                         vf,
++                         (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+     if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+   }
+   else
+diff --git a/dolfin/la/SLEPcEigenSolver.cpp b/dolfin/la/SLEPcEigenSolver.cpp
+index 6967ce7..9276201 100644
+--- a/dolfin/la/SLEPcEigenSolver.cpp
++++ b/dolfin/la/SLEPcEigenSolver.cpp
+@@ -113,14 +113,18 @@ void SLEPcEigenSolver::solve(std::size_t n)
+   {
+     KSP ksp;
+     ST st;
+-    EPSMonitorSet(_eps, EPSMonitorAll,
+-                  PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_eps)),
+-                  NULL);
++    PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_eps));
++    PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++    PetscViewerAndFormat *vf;
++
++    ierr = PetscViewerAndFormatCreate(viewer,format,&vf);CHKERRQ(ierr);
++    ierr = PetscObjectDereference((PetscObject)viewer);CHKERRQ(ierr);
++    ierr = KSPMonitorSet(ksp,(PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))monitor,vf,(PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);CHKERRQ(ierr);
++
++    EPSMonitorSet(_eps, EPSMonitorAll, vf, PetscViewerAndFormatDestroy);
+     EPSGetST(_eps, &st);
+     STGetKSP(st, &ksp);
+-    KSPMonitorSet(ksp, KSPMonitorDefault,
+-                  PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+-                  NULL);
++    KSPMonitorSet(ksp, KSPMonitorDefault, vf, PetscViewerAndFormatDestroy);
+     EPSView(_eps, PETSC_VIEWER_STDOUT_SELF);
+   }
+ 
+diff --git a/dolfin/nls/PETScSNESSolver.cpp b/dolfin/nls/PETScSNESSolver.cpp
+index 9cf89f4..ab658eb 100644
+--- a/dolfin/nls/PETScSNESSolver.cpp
++++ b/dolfin/nls/PETScSNESSolver.cpp
+@@ -216,9 +216,15 @@ PETScSNESSolver::init(NonlinearProblem& nonlinear_problem,
+   // Set some options from the parameters
+   if (report)
+   {
+-    SNESMonitorSet(_snes, SNESMonitorDefault,
+-                   PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_snes)),
+-                   NULL);
++    PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)_snes));
++    PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++    PetscViewerAndFormat *vf;
++    PetscViewerAndFormatCreate(viewer,format,&vf);
++    PetscObjectDereference((PetscObject)viewer);
++    SNESMonitorSet(_snes,
++                   (PetscErrorCode (*)(SNES,PetscInt,PetscReal,void*)) SNESMonitorDefault,
++                   vf,
++                   (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+   }
+ 
+   // Set the bounds, if any
+@@ -421,9 +427,15 @@ void PETScSNESSolver::set_linear_solver_parameters()
+ 
+   if (parameters["report"])
+   {
+-    KSPMonitorSet(ksp, KSPMonitorDefault,
+-                   PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+-                   NULL);
++    PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp));
++    PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++    PetscViewerAndFormat *vf;
++    ierr = PetscViewerAndFormatCreate(viewer,format,&vf);
++    ierr = PetscObjectDereference((PetscObject)viewer);
++    ierr = KSPMonitorSet(ksp,
++                         (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*)) KSPMonitorDefault,
++                         vf,
++                         (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+   }
+   const std::string linear_solver  = parameters["linear_solver"];
+   const std::string preconditioner = parameters["preconditioner"];
+@@ -456,9 +468,15 @@ void PETScSNESSolver::set_linear_solver_parameters()
+ 
+     if (krylov_parameters["monitor_convergence"])
+     {
+-      KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
+-                       PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+-                       NULL);
++      PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp));
++      PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++      PetscViewerAndFormat *vf;
++      ierr = PetscViewerAndFormatCreate(viewer,format,&vf);
++      ierr = PetscObjectDereference((PetscObject)viewer);
++      ierr = KSPMonitorSet(ksp,
++                         (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*)) KSPMonitorTrueResidualNorm,
++                         vf,
++                         (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+     }
+ 
+     // Set tolerances
+diff --git a/dolfin/nls/PETScTAOSolver.cpp b/dolfin/nls/PETScTAOSolver.cpp
+index c347a40..d260312 100644
+--- a/dolfin/nls/PETScTAOSolver.cpp
++++ b/dolfin/nls/PETScTAOSolver.cpp
+@@ -559,9 +559,15 @@ void PETScTAOSolver::set_ksp_options()
+     {
+       if (krylov_parameters["monitor_convergence"])
+       {
+-        ierr = KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
+-                             PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)),
+-                             NULL);
++        PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp));
++        PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++        PetscViewerAndFormat *vf;
++        ierr = PetscViewerAndFormatCreate(viewer,format,&vf);
++        ierr = PetscObjectDereference((PetscObject)viewer);
++        ierr = KSPMonitorSet(ksp,
++                         (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*)) KSPMonitorTrueResidualNorm,
++                         vf,
++                         (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+         if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+       }
+     }
+diff --git a/dolfin/nls/TAOLinearBoundSolver.cpp b/dolfin/nls/TAOLinearBoundSolver.cpp
+index 8fc8d5f..6cf0433 100644
+--- a/dolfin/nls/TAOLinearBoundSolver.cpp
++++ b/dolfin/nls/TAOLinearBoundSolver.cpp
+@@ -425,8 +425,15 @@ void TAOLinearBoundSolver::set_ksp_options()
+     {
+       if (krylov_parameters["monitor_convergence"])
+       {
+-        ierr = KSPMonitorSet(ksp, KSPMonitorTrueResidualNorm,
+-                             PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp)), NULL);
++        PetscViewer viewer = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)ksp));
++        PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
++        PetscViewerAndFormat *vf;
++        ierr = PetscViewerAndFormatCreate(viewer,format,&vf);
++        ierr = PetscObjectDereference((PetscObject)viewer);
++        ierr = KSPMonitorSet(ksp,
++                         (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*)) KSPMonitorTrueResidualNorm,
++                         vf,
++                         (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+         if (ierr != 0) petsc_error(ierr, __FILE__, "KSPMonitorSet");
+       }
+     }
+
+diff --git a/dolfin/la/SLEPcEigenSolver.cpp b/dolfin/la/SLEPcEigenSolver.cpp
+index 9276201..e79a20b 100644
+--- a/dolfin/la/SLEPcEigenSolver.cpp
++++ b/dolfin/la/SLEPcEigenSolver.cpp
+@@ -117,14 +117,14 @@ void SLEPcEigenSolver::solve(std::size_t n)
+     PetscViewerFormat format = PETSC_VIEWER_DEFAULT;
+     PetscViewerAndFormat *vf;
+ 
+-    ierr = PetscViewerAndFormatCreate(viewer,format,&vf);CHKERRQ(ierr);
+-    ierr = PetscObjectDereference((PetscObject)viewer);CHKERRQ(ierr);
+-    ierr = KSPMonitorSet(ksp,(PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))monitor,vf,(PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);CHKERRQ(ierr);
++    PetscViewerAndFormatCreate(viewer,format,&vf);
++    PetscObjectDereference((PetscObject)viewer);
+ 
+-    EPSMonitorSet(_eps, EPSMonitorAll, vf, PetscViewerAndFormatDestroy);
++    EPSMonitorSet(_eps, (PetscErrorCode (*)(EPS, PetscInt, PetscInt, PetscScalar *, PetscScalar *,PetscReal *, PetscInt, void *))EPSMonitorAll, vf,
++        (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+     EPSGetST(_eps, &st);
+     STGetKSP(st, &ksp);
+-    KSPMonitorSet(ksp, KSPMonitorDefault, vf, PetscViewerAndFormatDestroy);
++    KSPMonitorSet(ksp, (PetscErrorCode (*)(KSP,PetscInt,PetscReal,void*))KSPMonitorDefault, vf, (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy);
+     EPSView(_eps, PETSC_VIEWER_STDOUT_SELF);
+   }
+ 

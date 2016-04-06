@@ -12,6 +12,7 @@ configure()
   pushd $tmpdir/$srcdir
   ./configure \
     --prefix=$destdir \
+    --download-blopex \
     --with-arpack=1 \
     --with-arpack-dir=$ARPACK_DIR/lib
 }
@@ -27,7 +28,7 @@ package()
 {
   pushd $tmpdir/$srcdir
   # install new one
-  make SLEPC_DIR=$PWD PETSC_DIR=$PETSC_DIR install
+  make SLEPC_DIR=$tmpdir/$srcdir PETSC_DIR=$PETSC_DIR install
   popd
 }
 
