@@ -41,6 +41,14 @@ prepare()
     else
       git clone $pkgurl $srcdir
     fi
+  elif [ "${pkgurl::3}" == "svn" ]; then
+    if [ -d $srcdir/.svn ]; then
+      pushd $srcdir
+      svn update
+      popd
+    else
+      svn checkout ${pkgurl} ${srcdir}
+    fi
   else
     # standard download
     if ! [ -f $pkgfile ]; then

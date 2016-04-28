@@ -1,0 +1,22 @@
+# vim: set ft=sh:
+pkgname=valgrind
+pkgver=dev
+srcdir=valgrind
+pkgurl=svn://svn.valgrind.org/valgrind/trunk
+
+module load autoconf automake libtool
+module load gcc openmpi
+
+apply_patch()
+{
+  ./autogen.sh
+}
+
+pkgmodule=$(cat <<-EOT
+#%Module
+set VALGRIND_DIR $REPO/opt/valgrind-$pkgver
+setenv VALGRIND_DIR \$VALGRIND_DIR
+
+prepend-path PATH \$VALGRIND_DIR/bin
+EOT)
+
