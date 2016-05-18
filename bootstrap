@@ -8,7 +8,7 @@ mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
 pushd src
 _baseurl=https://downloads.sourceforge.net/project/modules/Modules
 moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
-if [ !-f "modules-${modulever}.tar.bz2" ]; then
+if [ ! -f "modules-${modulever}.tar.bz2" ]; then
   curl -O -L ${moduleurl}
 fi
 if [ -d "modules-${modulever}" ]; then
