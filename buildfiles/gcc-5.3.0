@@ -38,7 +38,7 @@ post_package()
 
 pkgmodule=$(cat <<-EOT
 #%Module
-set GCC_DIR $REPO/opt/gcc-$pkgver
+set GCC_DIR $destdir
 setenv GCC_DIR \$GCC_DIR
 
 prepend-path PATH \$GCC_DIR/bin
