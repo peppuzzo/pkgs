@@ -1,34 +1,75 @@
 #!/bin/bash -e
-modulever=3.2.10
-REPO=$PWD
+REPO="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+modulever=git
+#modulever=3.2.10
 
 # directory skeleton
 mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
-# build modules
+
+# download modules
 pushd src
-_baseurl=https://downloads.sourceforge.net/project/modules/Modules
-moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
-if [ ! -f "modules-${modulever}.tar.bz2" ]; then
-  curl -O -L ${moduleurl}
+if [ "x${modulesver}"=="git" ]; then
+  if [ -d "modules-git" ]; then
+    pushd modules-git
+    git pull
+    autoreconf -fi
+    popd
+  else
+    git clone git://git.code.sf.net/p/modules/git modules-git
+  fi
+else
+  _baseurl=https://downloads.sourceforge.net/project/modules/Modules
+  moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
+  if [ ! -f "modules-${modulever}.tar.bz2" ]; then
+    curl -O -L ${moduleurl}
+  fi
+  if [ -d "modules-${modulever}" ]; then
+    rm -rvf modules-${modulever}
+  fi
+  tar xvfj modules-${modulever}.tar.bz2
 fi
-if [ -d "modules-${modulever}" ]; then
-  rm -rvf modules-${modulever}
-fi
-tar xvfj modules-${modulever}.tar.bz2
+
+# build modules
 cd modules-${modulever}
+[[ -d "build" ]] && rm -rf build
 mkdir build
 cd build
 ../configure \
-  --prefix=$REPO/modules \
-  --with-module-path=$REPO/modules/${modulever}/modulefiles \
-  --with-version-path=$REPO/modules/versions \
-  CPPFLAGS=-DUSE_INTERP_ERRORLINE
+  --prefix=$REPO/opt/modules
+  #--with-module-path=$REPO/opt \
+  #--with-version-path=$REPO/modules/versions \
+  #CPPFLAGS=-DUSE_INTERP_ERRORLINE
 make install
 popd
-# cleanup
-rm -rf $REPO/src/modules-${modulever}
+
+if [ "x${modulesver}"=="git" ]; then
+  modulever=3.3.a
+fi
 
 # private modules
-source $REPO/modules/Modules/${modulever}/init/bash
-cp ${MODULESHOME}/modulefiles/null $REPO/modulefiles
+cp $REPO/opt/modules/${modulever}/share/modulefiles/null $REPO/modulefiles
+
+# create localenv file
+cat >$REPO/localenv.conf <<EOL
+modulever=${modulever}
+REPO=$REPO
+
+if [ -z "\${LOCALENV_SOURCED+x}" ]
+then
+  # safe-guard
+  export LOCALENV_SOURCED=yes
+  # init modules
+  source \$REPO/opt/modules/${modulever}/init/bash
+  module use-append \$REPO/modulefiles
+  #module load modules
+  export REPO
+  # this is required to have modules available
+  # when calling module from makepkg after
+  # module being sourced
+  export -f module
+fi
+EOL
+
+# cleanup
+rm -rf $REPO/src/modules-${modulever}
 
