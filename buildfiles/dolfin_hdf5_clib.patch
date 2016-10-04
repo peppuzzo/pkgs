@@ -1,0 +1,36 @@
+From 937568dce5b697aacac2df8e4addc203269f64a0 Mon Sep 17 00:00:00 2001
+From: "Garth N. Wells" <gnw20@cam.ac.uk>
+Date: Sat, 9 Jul 2016 18:27:23 +0100
+Subject: [PATCH] Fix CMake HDF5 lib variable.
+
+---
+ dolfin/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dolfin/CMakeLists.txt b/dolfin/CMakeLists.txt
+index 5059aa7..8e5c502 100644
+--- a/dolfin/CMakeLists.txt
++++ b/dolfin/CMakeLists.txt
+@@ -72,7 +72,7 @@ if (DOLFIN_ENABLE_HDF5 AND HDF5_FOUND)
+   list(APPEND DOLFIN_CXX_DEFINITIONS "-DHAS_HDF5")
+   list(APPEND DOLFIN_CXX_DEFINITIONS ${HDF5_DEFINITIONS})
+   list(APPEND DOLFIN_DEP_SYSTEM_INCLUDE_DIRECTORIES ${HDF5_INCLUDE_DIRS})
+-  list(APPEND DOLFIN_TARGET_LINK_LIBRARIES ${HDF5_LIBRARIES})
++  list(APPEND DOLFIN_TARGET_LINK_LIBRARIES ${HDF5_C_LIBRARIES})
+   list(APPEND DOLFIN_LINK_FLAGS ${HDF5_LINK_FLAGS})
+ endif()
+ 
+-- 
+2.7.4.1.g5468f9e
+
+--- CMakeLists.txt.old	2016-08-16 20:03:26.448336057 +0200
++++ CMakeLists.txt	2016-08-16 19:51:41.141625338 +0200
+@@ -553,7 +553,7 @@
+     set(ENV{HDF5_ROOT} "$ENV{HDF5_DIR}")
+   endif()
+   set(HDF5_PREFER_PARALLEL TRUE)
+-  find_package(HDF5)
++  find_package(HDF5 COMPONENTS C HL)
+   set_package_properties(HDF5 PROPERTIES TYPE OPTIONAL
+     DESCRIPTION "Hierarchical Data Format 5 (HDF5)"
+     URL "https://www.hdfgroup.org/HDF5")

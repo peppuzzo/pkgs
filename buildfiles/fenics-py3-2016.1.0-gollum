@@ -1,0 +1,105 @@
+# vim: set ft=sh:
+pkgname=fenics-py3
+pkgver=2016.1.0
+srcdir=dolfin-${pkgver}
+baseurl=https://bitbucket.org/fenics-project
+
+export PYTHONPATH=$PYTHONPATH:$destdir/lib/python3.5/site-packages
+export PATH=$PATH:$destdir/bin
+export USE_CMAKE=1
+export MAKE_NUMJOBS=11
+export HDF5_ROOT=/usr
+
+module load petsc-py3 slepc-py3 vtk-py3
+
+prepare()
+{
+  # we override default behaviour to install all dependencies
+  [[ -d $destdir ]] && rm -rf $destdir
+  [[ -d $tmpdir ]] && rm -rf $tmpdir
+  mkdir -pv $destdir/lib/python3.5/site-packages
+  mkdir -pv $tmpdir
+  pushd $tmpdir
+  # fenics-project dependencies
+  for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin"; do
+    curl -O -L ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
+    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
+    pushd ${fenicspkg}-${pkgver}
+    if [[ ${fenicspkg} == "dolfin" ]]; then
+      patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
+      git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
+    else
+      python setup.py install --prefix=$destdir
+    fi
+    popd
+  done
+}
+
+export CXXFLAGS="-fext-numeric-literals"
+confopts=$(cat <<END_HEREDOC
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
+-D DOLFIN_ENABLE_DOCS:BOOL=OFF
+-D DOLFIN_ENABLE_TESTING:BOOL=OFF
+-D PYTHON_EXECUTABLE:PATH=/usr/bin/python
+-D PYTHON_LIBRARY:PATH=`python-config --prefix`/lib/libpython3.5m.so
+-D PYTHON_INCLUDE_DIR:PATH=`python-config --prefix`/include/python3.5m
+END_HEREDOC
+)
+
+pre_package() { :; }
+
+post_package()
+{
+  pushd $tmpdir
+  # libadjoint
+  if [[ -d libadjoint ]]; then
+    git -C libadjoint pull
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/libadjoint.git
+  fi
+  pushd libadjoint
+  [[ -d build ]] && rm -rf build
+  mkdir -pv build && cd build
+  cmake \
+    -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF \
+    -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF \
+    -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib \
+    -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
+    ../
+  make install
+  popd
+  # dolfin-adjoint
+  if [[ -d dolfin-adjoint ]]; then
+    git -C dolfin-adjoint pull
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git
+  fi
+  pushd dolfin-adjoint
+  python setup.py install --prefix=$destdir
+  popd
+  # moola
+  if [[ -d moola ]]; then
+    git -C moola pull
+  else
+    git clone https://github.com/funsim/moola.git
+  fi
+  pushd moola
+  python setup.py install --prefix=$destdir
+  popd
+  popd
+}
+
+pkgmodule=$(cat <<END_HEREDOC
+#%Module
+module load petsc-py3 slepc-py3 vtk-py3 gmsh
+
+set FENICS_DIR $destdir
+
+prepend-path PATH \$FENICS_DIR/bin
+prepend-path MANPATH \$FENICS_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$FENICS_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$FENICS_DIR/lib/python3.5/site-packages
+prepend-path LD_LIBRARY_PATH \$FENICS_DIR/lib
+END_HEREDOC
+)

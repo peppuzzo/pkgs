@@ -10,13 +10,13 @@ mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
 pushd src
 if [ "x${modulesver}"=="git" ]; then
   if [ -d "modules-git" ]; then
-    pushd modules-git
-    git pull
-    autoreconf -fi
-    popd
+    git -C modules-git pull
   else
     git clone git://git.code.sf.net/p/modules/git modules-git
   fi
+  pushd modules-git
+  autoreconf -fi
+  popd
 else
   _baseurl=https://downloads.sourceforge.net/project/modules/Modules
   moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2

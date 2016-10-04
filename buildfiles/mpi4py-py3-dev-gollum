@@ -1,0 +1,27 @@
+# vim: set ft=sh:
+pkgname=mpi4py-py3
+pkgver=dev
+pkgurl=git@bitbucket.org:mpi4py/mpi4py.git
+
+module load openmpi
+
+configure() { :; }
+build() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  python setup.py install --prefix=$destdir
+  popd
+}
+testing() { :; }
+
+pkgmodule=$(cat <<END_HEREDOC
+#%Module
+module load openmpi
+
+set MPI4PY_DIR $destdir
+setenv MPI4PY_DIR \$MPI4PY_DIR
+
+prepend-path PYTHONPATH \$MPI4PY_DIR/lib/python3.5/site-packages
+END_HEREDOC
+)

@@ -1,0 +1,37 @@
+# vim: set ft=sh:
+pkgname=opencascade
+pkgver=7.0.0
+pkgurl=https://sources.archlinux.org/other/community/$pkgname/$pkgname-${pkgver}.tgz
+
+module load vtk-py2
+
+export USE_CMAKE=1
+export MAKE_NUMJOBS=11
+
+confopts=$(cat <<END_HEREDOC
+-D INSTALL_DIR:PATH=$destdir
+-D CMAKE_PREFIX_PATH:PATH=$destdir
+-D CMAKE_INCLUDE_PATH:PATH=$destdir/lib
+-D USE_TBB:BOOL=ON
+-D USE_VTK:BOOL=ON
+END_HEREDOC
+)
+
+apply_patch()
+{
+  patch -Np0 < $REPO/buildfiles/opencascade_vtk71.patch
+}
+
+pkgmodule=$(cat <<END_HEREDOC
+#%Module
+module load vtk-py2
+
+set OCC_DIR $destdir
+set CASROOT $destdir
+setenv OCC_DIR \$OCC_DIR
+setenv CASROOT \$CASROOT
+
+prepend-path PATH \$OCC_DIR/bin
+prepend-path LD_LIBRARY_PATH \$OCC_DIR/lib
+END_HEREDOC
+)

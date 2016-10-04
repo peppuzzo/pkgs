@@ -5,7 +5,7 @@ pkgurl=http://files.opencascade.com/OCCT/OCC_${pkgver}_release/$pkgname-${pkgver
 destdir=$REPO/opt/$pkgname-$pkgver
 
 export USE_CMAKE=1
-export MAKE_NUMJOBS=8
+export MAKE_NUMJOBS=11
 
 module load cmake
 module load freetype

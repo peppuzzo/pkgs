@@ -1,0 +1,121 @@
+# vim: set ft=sh:
+pkgname=fenics-py2
+pkgver=2016.1.0
+srcdir=dolfin-${pkgver}
+baseurl=https://bitbucket.org/fenics-project
+
+module load hdf5 openmpi petsc-py2 slepc-py2 vtk-py2
+
+# necessary for python dependencies
+export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
+export PATH=$PATH:$destdir/bin
+export USE_CMAKE=1
+export MAKE_NUMJOBS=11
+export HDF5_ROOT=$HDF5_DIR
+
+prepare()
+{
+  # we override default behaviour to install all dependencies
+  [[ -d $destdir ]] && rm -rf $destdir
+  [[ -d $tmpdir ]] && rm -rf $tmpdir
+  mkdir -pv $destdir/lib/python2.7/site-packages
+  mkdir -pv $tmpdir
+  pushd $tmpdir
+  # fenics-project dependencies
+  for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin"; do
+    curl -O -L ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
+    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
+    pushd ${fenicspkg}-${pkgver}
+    if [[ ${fenicspkg} == "dolfin" ]]; then
+      patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
+      git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
+    else
+      python2 setup.py install --prefix=$destdir
+    fi
+    popd
+  done
+}
+
+export CXXFLAGS="-fext-numeric-literals"
+confopts=$(cat <<END_HEREDOC
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
+-D DOLFIN_ENABLE_DOCS:BOOL=OFF
+-D DOLFIN_ENABLE_TESTING:BOOL=OFF
+-D PYTHON_EXECUTABLE:PATH=/usr/bin/python2
+-D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so
+-D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7
+END_HEREDOC
+)
+
+# do not remove pre-installed packages
+pre_package() { :; }
+
+post_package()
+{
+  pushd $tmpdir
+  # mshr
+  curl -O -L ${baseurl}/mshr/downloads/mshr-${pkgver}.tar.gz
+  tar xvfz mshr-${pkgver}.tar.gz
+  pushd mshr-${pkgver}
+  [[ -d build ]] && rm -rf build
+  mkdir -pv build && cd build
+  cmake \
+    -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D PYTHON_EXECUTABLE:PATH=/usr/bin/python2 \
+    -D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so \
+    -D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7 \
+    ../
+  make install
+  popd
+  # libadjoint
+  if [[ -d libadjoint ]]; then
+    git -C libadjoint pull
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/libadjoint.git
+  fi
+  pushd libadjoint
+  [[ -d build ]] && rm -rf build
+  mkdir -pv build && cd build
+  cmake \
+    -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D PYTHON_EXECUTABLE:PATH=/usr/bin/python2 \
+    -D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so \
+    -D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7 \
+    ../
+  make install
+  popd
+  # dolfin-adjoint
+  if [[ -d dolfin-adjoint ]]; then
+    git -C dolfin-adjoint pull
+  else
+    git clone git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git
+  fi
+  pushd dolfin-adjoint
+  python2 setup.py install --prefix=$destdir
+  popd
+  # moola
+  if [[ -d moola ]]; then
+    git -C moola pull
+  else
+    git clone https://github.com/funsim/moola.git
+  fi
+  pushd moola
+  python2 setup.py install --prefix=$destdir
+  popd
+  popd
+}
+
+pkgmodule=$(cat <<END_HEREDOC
+#%Module
+module load hdf5 openmpi petsc-py2 slepc-py2 vtk-py2 gmsh
+
+set FENICS_DIR $destdir
+
+prepend-path PATH \$FENICS_DIR/bin
+prepend-path MANPATH \$FENICS_DIR/share/man
+prepend-path PKG_CONFIG_PATH \$FENICS_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$FENICS_DIR/lib/python2.7/site-packages
+prepend-path LD_LIBRARY_PATH \$FENICS_DIR/lib
+END_HEREDOC
+)
