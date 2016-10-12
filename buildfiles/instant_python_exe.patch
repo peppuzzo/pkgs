@@ -1,0 +1,12 @@
+--- a/instant/build.py.orig	2016-10-05 08:04:42.816331306 +0200
++++ b/instant/build.py	2016-10-05 08:05:16.703000086 +0200
+@@ -124,7 +124,8 @@
+ 
+         if build_system == "distutils":
+             # Build extension module with distutils
+-            cmd = "python setup.py build_ext install --install-platlib=."
++            python_interp = sys.executable
++            cmd = python_interp + " setup.py build_ext install --install-platlib=."
+             instant_debug("cmd = %s" % cmd)
+             ret, output = get_status_output(cmd)
+             compile_log_file.write(output)

@@ -52,6 +52,7 @@ set GMSH_DIR $destdir
 setenv GMSH_DIR \$GMSH_DIR
 
 prepend-path PATH \$GMSH_DIR/bin
+prepend-path LD_LIBRARY_PATH \$GMSH_DIR/lib
 END_HEREDOC
 )
 

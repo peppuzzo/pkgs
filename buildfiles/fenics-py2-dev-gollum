@@ -1,7 +1,7 @@
 # vim: set ft=sh:
 pkgname=fenics-py2
-pkgver=2016.1.0
-srcdir=dolfin-${pkgver}
+pkgver=dev
+srcdir=dolfin
 baseurl=https://bitbucket.org/fenics-project
 
 module load hdf5 openmpi petsc-py2 slepc-py2 vtk-py2
@@ -19,16 +19,16 @@ prepare()
   mkdir -pv $tmpdir
   pushd $tmpdir
   # fenics-project dependencies
-  for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin" "mshr"; do
-    curl -O -L ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
-    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
-    pushd ${fenicspkg}-${pkgver}
+  for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin" "mshr" "dijitso"; do
+    if [ ! -d "$fenicspkg" ]; then
+      git clone git@bitbucket.org:fenics-project/$fenicspkg.git
+    else
+      git -C $fenicspkg pull
+    fi
+    pushd ${fenicspkg}
     # patches
     if [[ "x${fenicspkg}" == "xdolfin" ]]; then
-      patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-      git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
-    elif [[ "x${fenicspkg}" == "xinstant" ]]; then
-      patch -Np1 < $REPO/buildfiles/instant_python_exe.patch
+      git apply $REPO/buildfiles/dolfin_vtk_version.patch
     fi
     popd
   done
@@ -40,8 +40,8 @@ prepare()
   [[ -d $destdir ]] && rm -rfv $destdir
   # install dependencies
   mkdir -pv $destdir/lib/python2.7/site-packages
-  for fenicspkg in "ufl" "fiat" "instant" "ffc"; do
-    pushd $tmpdir/${fenicspkg}-${pkgver}
+  for fenicspkg in "dijitso" "ufl" "fiat" "instant" "ffc"; do
+    pushd $tmpdir/${fenicspkg}
     python2 setup.py install --prefix=$destdir
     popd
   done
@@ -67,7 +67,7 @@ post_package()
 {
   pushd $tmpdir
   # mshr
-  pushd mshr-${pkgver}
+  pushd mshr
   [[ -d build ]] && rm -rf build
   mkdir -pv build && cd build
   cmake \
