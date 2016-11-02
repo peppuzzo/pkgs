@@ -1,67 +1,81 @@
 #!/bin/bash -e
 REPO="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# two versions of module available: git and latest stable
 modulever=git
 #modulever=3.2.10
+
+# check if module command is available (eg clusters)
+modulemiss=`type module >/dev/null 2>&1 && echo no || echo yes`
+echo "modules available on system = $modulemiss"
 
 # directory skeleton
 mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
 
-# download modules
-pushd src
-if [ "x${modulesver}"=="git" ]; then
-  if [ -d "modules-git" ]; then
-    git -C modules-git pull
+if [ "x${modulemiss}" = "xyes" ]; then
+  # download modules
+  pushd src
+  if [ "x${modulesver}" = "xgit" ]; then
+    if [ -d "modules-git" ]; then
+      git -C modules-git pull
+    else
+      git clone git://git.code.sf.net/p/modules/git modules-git
+    fi
+    pushd modules-git
+    autoreconf -fi
+    popd
   else
-    git clone git://git.code.sf.net/p/modules/git modules-git
+    _baseurl=https://downloads.sourceforge.net/project/modules/Modules
+    moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
+    if [ ! -f "modules-${modulever}.tar.bz2" ]; then
+      curl -O -L ${moduleurl}
+    fi
+    if [ -d "modules-${modulever}" ]; then
+      rm -rvf modules-${modulever}
+    fi
+    tar xvfj modules-${modulever}.tar.bz2
   fi
-  pushd modules-git
-  autoreconf -fi
+
+  # build modules
+  cd modules-${modulever}
+  [[ -d "build" ]] && rm -rf build
+  mkdir build
+  cd build
+  ../configure \
+    --prefix=$REPO/opt/modules
+    #--with-module-path=$REPO/opt \
+    #--with-version-path=$REPO/modules/versions \
+    #CPPFLAGS=-DUSE_INTERP_ERRORLINE
+  make install
   popd
-else
-  _baseurl=https://downloads.sourceforge.net/project/modules/Modules
-  moduleurl=$_baseurl/modules-${modulever}/modules-${modulever}.tar.bz2
-  if [ ! -f "modules-${modulever}.tar.bz2" ]; then
-    curl -O -L ${moduleurl}
-  fi
-  if [ -d "modules-${modulever}" ]; then
-    rm -rvf modules-${modulever}
-  fi
-  tar xvfj modules-${modulever}.tar.bz2
-fi
 
-# build modules
-cd modules-${modulever}
-[[ -d "build" ]] && rm -rf build
-mkdir build
-cd build
-../configure \
-  --prefix=$REPO/opt/modules
-  #--with-module-path=$REPO/opt \
-  #--with-version-path=$REPO/modules/versions \
-  #CPPFLAGS=-DUSE_INTERP_ERRORLINE
-make install
-popd
+  if [ "x${modulesver}"=="git" ]; then
+    modulever=3.3.a
+  fi
 
-if [ "x${modulesver}"=="git" ]; then
-  modulever=3.3.a
+  # cleanup
+  rm -rf $REPO/src/modules-${modulever}
+
+  MODULESHOME=$REPO/opt/modules/${modulever}/share
 fi
 
 # private modules
-cp $REPO/opt/modules/${modulever}/share/modulefiles/null $REPO/modulefiles
+cp ${MODULESHOME}/modulefiles/null $REPO/modulefiles
 
 # create localenv file
 cat >$REPO/localenv.conf <<EOL
-modulever=${modulever}
 REPO=$REPO
+EOL
 
-if [ -z "\${LOCALENV_SOURCED+x}" ]
-then
+# add a few lines to setup modules in case not available externally
+if [ "x${modulemiss}" = "xyes" ]; then
+  cat >>$REPO/localenv.conf <<EOL
+# setup modules if not externally provided
+if [ -z "\${MODULES_SOURCED+x}" ]; then
   # safe-guard
-  export LOCALENV_SOURCED=yes
+  export MODULES_SOURCED=yes
   # init modules
   source \$REPO/opt/modules/${modulever}/init/bash
-  module use-append \$REPO/modulefiles
-  #module load modules
   export REPO
   # this is required to have modules available
   # when calling module from makepkg after
@@ -69,7 +83,15 @@ then
   export -f module
 fi
 EOL
+fi
 
-# cleanup
-rm -rf $REPO/src/modules-${modulever}
+# set-up modulefiles directory
+cat >>$REPO/localenv.conf <<EOL
+module use-append \$REPO/modulefiles
+export REPO
+# this is required to have modules available
+# when calling module from makepkg after
+# module being sourced
+export -f module
+EOL
 
