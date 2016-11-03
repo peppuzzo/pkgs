@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+# ================ #
+# HELPER FUNCTIONS #
+# ================ #
+
 make_shlib()
 {
   local libname=$(basename ${1%.*})
@@ -24,20 +28,55 @@ make_shlib()
   ln -svf ${soname} ${sonamemajor}
 }
 
+makepkg_download()
+{
+  # prefer wget to curl, if available
+  if hash wget 2>/dev/null; then
+    wget -N $1
+  else
+    [ -f $pkgfile ] || curl -O -L $1
+  fi
+}
+
+makepkg_untar()
+{
+  # prefer bsdtar if available
+  if hash bsdtar 2>/dev/null; then
+    bsdtar -xf $1
+  else
+    # get the mime-type from the downloaded file
+    local mime=`file --mime-type $1 | cut -d":" -f2 | tr -d " "`
+    # untar accordingly to the mimetype
+    case $mime in
+      "application/x-bzip2")
+        tar xvfj $1 -C $tmpdir
+        ;;
+      "application/x-gzip")
+        tar xvfz $1 -C $tmpdir
+        ;;
+      *)
+        echo "Error: filetype '$mime' not recognized!"
+        exit 1
+        ;;
+    esac
+  fi
+}
+
+# ================= #
+# DEFAULT FUNCTIONS #
+# ================= #
+
 apply_patch() { :; }
 
 prepare()
 {
-  # create a tempdir for the source
-  # if not present
+  # create a tempdir for the source if not present
+  local pkgfile=`basename $pkgurl`
   mkdir -pv $tmpdir && pushd $tmpdir
-  pkgfile=`basename $pkgurl`
   # check if git repository
   if [ "${pkgfile##*.}" == "git" ]; then
     if [ -d $srcdir/.git ]; then
-      pushd $srcdir
-      git rebase
-      popd
+      git -C $srcdir rebase
     else
       git clone $pkgurl $srcdir
     fi
@@ -51,13 +90,11 @@ prepare()
     fi
   else
     # standard download
-    if ! [ -f $pkgfile ]; then
-      curl -O -L $pkgurl
-    fi
+    makepkg_download $pkgurl
     # remove old source dir
     rm -rf $srcdir
-    # untar
-    bsdtar -xf $pkgfile
+    # untar, again prefer bsdtar
+    makepkg_untar $pkgfile
   fi
   # apply patches
   pushd $srcdir
@@ -100,6 +137,7 @@ pre_package()
 {
   #remove old installation
   if [[ -d $destdir ]]; then
+    echo "${bold}Removing old installation${norm}"
     rm -rfv $destdir
   fi
 }
@@ -116,48 +154,120 @@ package()
   popd
 }
 
+# Generate the modulefile for the package that we built.
+# If the variable $pkgmodule is not set, we generate our
+# own module file looking for default directories to
+# expose.
+# If the variable $pkgmodule is empty we do not create
+# the module file.
+# If a variable $pkgmodule_extra is set, we include it
+# into the modulefiles after the header but before the
+# prepend-path calls.  This is useful to load additional
+# dependencies.
 feedmodule()
 {
-  echo "$pkgmodule" > $modulefile
+  # Create the directory
+  if [ ! -d `dirname "${modulefile}"` ]; then
+    echo `dirname "${modulefile}"`
+    mkdir -pv `dirname $modulefile`
+  fi
+
+  if [ ! -n "${pkgmodule+x}" ]; then
+    # Generate our own modulefile
+    echo "Generate modulefile '$modulefile'..."
+    echo "#%Module1.0" > $modulefile
+    # We set an environment variable [PKGNAME]_DIR to
+    # $destdir for convenience, to use as dependency
+    local PKGDIR="`echo $pkgname | awk '{print toupper($0)}'`_DIR"
+    echo "set ${PKGDIR} $destdir" >> $modulefile
+    echo "setenv ${PKGDIR} \$${PKGDIR}" >> $modulefile
+    # Add extra module dependencies
+    if [ ! ${#moduledeps[@]} -eq 0 ]; then
+      echo "module load ${moduledeps[*]}" >> $modulefile
+    fi
+    # Add extra things
+    if [ -n "${pkgmodule_extra+x}" ]; then
+      echo "${pkgmodule_extra}" >> $modulefile
+    fi
+    # Add binaries
+    if [ -d "${destdir}/bin" ]; then
+      echo "prepend-path PATH \$${PKGDIR}/bin" >> $modulefile
+    fi
+    # Add libraries (only on Unix)
+    if [ "x$OSTYPE" = "xlinux-gnu" ]; then
+      if [ -d "${destdir}/lib" ]; then
+        echo "prepend-path LD_LIBRARY_PATH \$${PKGDIR}/lib" >> $modulefile
+      fi
+      if [ -d "${destdir}/lib64" ]; then
+        echo "prepend-path LD_LIBRARY_PATH \$${PKGDIR}/lib64" >> $modulefile
+      fi
+    fi
+    # Add pkg-config, man and info
+    if [ -d "${destdir}/lib/pkgconfig" ]; then
+      echo "prepend-path PKG_CONFIG_PATH \$${PKGDIR}/lib/pkgconfig" >> $modulefile
+    fi
+    if [ -d "${destdir}/share/man" ]; then
+      echo "prepend-path MANPATH \$${PKGDIR}/share/man" >> $modulefile
+    fi
+    if [ -d "${destdir}/share/info" ]; then
+      echo "prepend-path INFOPATH \$${PKGDIR}/share/info" >> $modulefile
+    fi
+
+  elif [ ! "x${pkgmodule}" = "x" ]; then
+    # Dump to file
+    echo "$pkgmodule" > $modulefile
+  fi
 }
 
 post_package() { :; }
 
-# check if repo is set, otherwise we
-# locally set it just for installation
-if [ -z ${REPO+x} ]; then
-  source localenv.conf
-fi
+
+# ============== #
+# MAIN EXECUTION #
+# ============== #
+
+bold=$(tput bold)
+norm=$(tput sgr0)
+
+# check if repo is set, otherwise we locally set it just for installation
+[ -z ${REPO+set} ] && source localenv.conf
+echo "${bold}Using repository:${norm} $REPO"
 
 # check if the requested package exists
 pkgsource=$1
 if [ ! -f $pkgsource ]; then
   echo "'$pkgsource' not found!"
-  exit
+  exit 1
 fi
 
-# define variables
+# define variables before sourcing the file... so they can be overridden
 tmpdir=$REPO/src/$(basename "$pkgsource")
 destdir=$REPO/opt/$(basename "$pkgsource")
+# this works most of the time, but not always, for instance when the name
+# contains a dash... in which case we simply define these variables in
+# the source
+pkgname=$(echo $(basename "$pkgsource")|cut -d"-" -f1)
+pkgver=$(echo $(basename "$pkgsource")|cut -d"-" -f2)
+moduledeps=()
+MAKE_NUMJOBS=4
 
-# source the content
-# this will override functions defined here
+echo "${bold}Destination directory:${norm} $destdir"
+echo "${bold}Temporary directory:${norm} $tmpdir"
+
+# source the content of the package makefile
+# this will override functions defined above, if necessary
 source $pkgsource
+echo "${bold}Sourced file:${norm} $pkgsource"
+echo "${bold}Building package:${norm} $pkgname $pkgver"
 
-if [ -z ${srcdir+x} ]; then
-  srcdir=$pkgname-$pkgver
-fi
-if [ -z ${builddir+x} ]; then
-  builddir=$tmpdir/$srcdir/build
-fi
-if [ -z ${MAKE_NUMJOBS+x} ]; then
-  MAKE_NUMJOBS=4
-fi
-modulefile=$REPO/modulefiles/$pkgname/$pkgver
-if [ ! -d `dirname "${modulefile}"` ]; then
-  echo `dirname "${modulefile}"`
-  mkdir -pv `dirname $modulefile`
-fi
+# we handle special case for these variables
+[ -z ${srcdir+x} ] && srcdir=$pkgname-$pkgver
+[ -z ${builddir+x} ] && builddir=$tmpdir/$srcdir/build
+[ -z ${modulefile+x} ] && modulefile=$REPO/modulefiles/$pkgname/$pkgver
+
+echo "${bold}Source directory:${norm} $srcdir"
+echo "${bold}Build directory:${norm} $builddir"
+echo "${bold}Module file:${norm} $modulefile"
 
 if [ "x$2" == "x" ]; then
   # run all the commands

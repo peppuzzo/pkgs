@@ -1,0 +1,18 @@
+# vim: set ft=sh:
+source $REPO/buildfiles/hwloc-$pkgver
+pkgname=hwloc
+modulefile=$REPO/modulefiles/hwloc_cuda/$pkgver
+
+# On ICS-HPC we use CUDA provided by /apps
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  module load cudatoolkit
+  export CFLAGS="-I${CUDATOOLKIT_DIR}/include"
+  export LDFLAGS="-L${CUDATOOLKIT_DIR}/lib64"
+  moduledeps+=('cudatoolkit')
+else
+  module load cuda
+  export CFLAGS="-I${CUDA_DIR}/include"
+  export LDFLAGS="-L${CUDA_DIR}/lib64"
+  moduledeps+=('cuda')
+fi
+
