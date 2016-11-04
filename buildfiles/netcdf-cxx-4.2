@@ -4,6 +4,7 @@ pkgver=4.2
 pkgurl=http://www.unidata.ucar.edu/downloads/netcdf/ftp/${pkgname}-${pkgver}.tar.gz
 
 module load netcdf openmpi
+moduledeps+=("netcdf" "openmpi")
 
 export CC=mpicc
 export FC=mpif90
@@ -12,11 +13,3 @@ export CPPFLAGS="-I$NETCDF_DIR/include"
 export LDFLAGS="-L$NETCDF_DIR/lib"
 confopts="--enable-shared"
 
-pkgmodule=$(cat <<-EOT
-#%Module
-set NETCDFCXX_DIR $REPO/opt/netcdf-cxx-$pkgver
-setenv NETCDFCXX_DIR \$NETCDFCXX_DIR
-
-prepend-path PATH \$NETCDFCXX_DIR/bin
-prepend-path PKG_CONFIG_PATH \$NETCDFCXX_DIR/lib/pkgconfig
-EOT)
