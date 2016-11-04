@@ -1,17 +1,11 @@
 # vim: set ft=sh:
-pkgname=cuda
-pkgver=7.5
+onlymodule=yes
 
-pkgmodule=$(cat <<-EOT
-#%Module
-set CUDA_DIR /Developer/NVIDIA/CUDA-${pkgver}
-setenv CUDA_DIR \$CUDA_DIR
+if [[ ${OSTYPE} == "darwin"* ]]; then
+  # Default location on macOS
+  destdir=/Developer/NVIDIA/CUDA-${pkgver}
+else
+  # Default on ArchLinux
+  destdir=/opt/cuda
+fi
 
-prepend-path PATH \$CUDA_DIR/bin
-prepend-path DYLD_LIBRARY_PATH \$CUDA_DIR/lib
-EOT)
-
-prepare() { :; }
-configure() { :; }
-build() { :; }
-package() { :; }

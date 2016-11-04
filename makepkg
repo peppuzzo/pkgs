@@ -121,16 +121,12 @@ configure()
 
 build()
 {
-  pushd $builddir
-  make -j$MAKE_NUMJOBS
-  popd
+  make -C $builddir -j$MAKE_NUMJOBS
 }
 
 testing()
 {
-  pushd $builddir
-  make check
-  popd
+  make -C $builddir check
 }
 
 pre_package()
@@ -144,15 +140,15 @@ pre_package()
 
 package()
 {
-  pushd $builddir
-  make install
-  popd
+  make -C $builddir install
   pushd $destdir
   if [ -f "share/info/dir" ]; then
     rm share/info/dir
   fi
   popd
 }
+
+post_package() { :; }
 
 # Generate the modulefile for the package that we built.
 # If the variable $pkgmodule is not set, we generate our
@@ -219,9 +215,6 @@ feedmodule()
   fi
 }
 
-post_package() { :; }
-
-
 # ============== #
 # MAIN EXECUTION #
 # ============== #
@@ -269,17 +262,21 @@ echo "${bold}Source directory:${norm} $srcdir"
 echo "${bold}Build directory:${norm} $builddir"
 echo "${bold}Module file:${norm} $modulefile"
 
+[ -z ${onlymodule+x} ] && onlymodule=no
+
 if [ "x$2" == "x" ]; then
   # run all the commands
-  prepare
-  configure
-  build
-  pre_package
-  package
-  post_package
+  if [ "x$onlymodule" == "xno" ]; then 
+    prepare
+    configure
+    build
+    pre_package
+    package
+    post_package
+  fi
   feedmodule
-  #testing
 else
   # run only the requested command
   "${2}"
 fi
+

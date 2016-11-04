@@ -3,14 +3,9 @@ source $REPO/buildfiles/openmpi-$pkgver
 pkgname=openmpi
 modulefile=$REPO/modulefiles/openmpi_cuda/$pkgver
 
-# On ICS-HPC we use CUDA provided by /apps
-if [[ ${HOSTNAME} == "ics"* ]]; then
-  module load cudatoolkit
-  confopts+=" -with-cuda=${CUDATOOLKIT_DIR}"
-  moduledeps+=('cudatoolkit')
-else
-  module load cuda
-  confopts+=" -with-cuda=${CUDA_DIR}"
-  moduledeps+=('cuda')
-fi
+# Note: on ICS-HPC we use CUDA provided by /apps
+module load cudatoolkit
+confopts+=" -with-cuda=${CUDATOOLKIT_DIR}"
+moduledeps+=('cudatoolkit')
+pkgmodule_extra+="conflict openmpi"
 

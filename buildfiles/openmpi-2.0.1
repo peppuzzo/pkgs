@@ -4,6 +4,7 @@ pkgurl=${baseurl}/openmpi-${pkgver}.tar.bz2
 
 module load hwloc
 moduledeps+=("hwloc")
+pkgmodule_extra+="conflict openmpi_cuda"
 
 export MAKE_NUMJOBS=8
 
