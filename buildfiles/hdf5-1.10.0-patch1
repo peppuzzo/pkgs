@@ -1,0 +1,34 @@
+# vim: set ft=sh:
+pkgname=hdf5
+pkgver=1.10.0-patch1
+baseurl=ftp://ftp.hdfgroup.org/HDF5/releases/hdf5-1.10/hdf5-${pkgver}/src
+pkgurl=${baseurl}/hdf5-${pkgver}.tar.bz2
+
+module load openmpi
+module load szip
+moduledeps+=("openmpi" "szip")
+
+export CXX=mpicxx
+export CC=mpicc
+export FC=mpif90
+export F9X=mpif90
+export RUNPARALLEL=mpirun
+export OMPI_MCA_disable_memory_allocator=1
+confopts=" --with-zlib=/usr"
+confopts=" --with-szlib=$SZIP_DIR"
+confopts+=" --enable-shared"
+confopts+=" --enable-build-mode=production"
+confopts+=" --enable-parallel=yes"
+contopts+=" --with-default-api-version=v18"
+confopts+=" --enable-unsupported"
+confopts+=" --enable-cxx"
+confopts+=" --enable-fortran"
+
+post_package()
+{
+  # required for FindHDF5.cmake...
+  pushd $destdir/bin
+  ln -vfs h5pcc h5cc
+  popd
+}
+

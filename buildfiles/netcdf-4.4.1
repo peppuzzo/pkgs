@@ -1,0 +1,13 @@
+# vim: filetype=sh
+pkgurl=http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-${pkgver}.tar.gz
+
+module load openmpi hdf5
+moduledeps+=('openmpi' 'hdf5')
+
+export CC=mpicc
+export FC=mpif90
+export CXX=mpicxx
+export CPPFLAGS="-I$HDF5_DIR/include"
+export LDFLAGS="-L$HDF5_DIR/lib"
+confopts="--enable-shared --enable-netcdf-4"
+

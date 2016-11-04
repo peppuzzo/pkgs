@@ -1,0 +1,12 @@
+# vim: set ft=sh:
+baseurl=https://www.open-mpi.org/software/ompi/v2.0/downloads
+pkgurl=${baseurl}/openmpi-${pkgver}.tar.bz2
+
+module load hwloc
+moduledeps+=("hwloc")
+
+export MAKE_NUMJOBS=8
+
+confopts="--enable-mpi-fortran"
+confopts+=" --with-hwloc=$HWLOC_DIR"
+

@@ -1,0 +1,57 @@
+# vim: set ft=sh:
+pkgurl=https://www.python.org/ftp/python/${pkgver}/Python-${pkgver}.tgz
+srcdir=Python-${pkgver}
+
+apply_patch()
+{
+  makepkg_download http://bugs.python.org/file41173/descr_ref.patch
+  patch -p1 -i descr_ref.patch
+}
+
+# Optimized version
+export CFLAGS="-O2 -march=native"
+confopts="--enable-shared --with-threads --with-ensurepip --with-icc"
+confopts+=" --with-dbmliborder=gdbm:ndbm"
+# On HPC-ICS we build with Intel compiler for better performance
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  module load intel
+  moduledeps+=("intel")
+  confopts+=" --with-icc"
+fi
+
+testing()
+{
+  make -C $builddir quicktest
+}
+
+post_package()
+{
+  # we need to set the python path to work with the new version
+  export PATH=$destdir/bin:$PATH
+  pip install -U pip
+  pip install -U setuptools
+  pip install wheel
+  pip install nose
+  pip install --no-binary=:all: --verbose Cython
+  if [[ ${HOSTNAME} == "ics"* ]]; then
+    # numpy and scipy installed manually to use intel
+    pushd $tmpdir
+    for _pkg in "numpy scipy"; do
+      pip download --no-binary=:all: -d. $_pkg
+      fpkg="$(find $_pkg-* -maxdepth 0 -type f | head -n 1)"
+      fdir="$(find $_pkg-* -maxdepth 0 -type d | head -n 1)"
+      makepkg_untar $fpkg
+      cd $fdir
+      python setup.py config --compiler=intelem --fcompiler=intelem
+      python setup.py build_clib --compiler=intelem --fcompiler=intelem
+      python setup.py build_ext --compiler=intelem --fcompiler=intelem
+      python setup.py install
+    done
+    popd
+  else
+    pip install numpy scipy
+  fi
+  pip install --no-binary=:all: --verbose matplotlib
+  pip install ipython
+}
+

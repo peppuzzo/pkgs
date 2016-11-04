@@ -1,0 +1,93 @@
+# vim: set ft=sh:
+pkgurl=http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-${pkgver}.tar.gz
+srcdir=petsc-$pkgver
+
+# NOTE: this package provides also petsc4py and mpi4py
+
+# PETSc has its automatic way to deal with multiple versions, compiled with
+# and without debug symbols, or with different compilers.
+# PETSC_ARCH takes care of this automatically.
+# NOTE: external packages are downloaded in the destination folder since the
+# beginning.
+# Thus, we override the default makepkg behaviour here to have the source
+# already in the destination folder.
+
+export PETSC_DIR=$destdir
+export PETSC_ARCH=arch-linux2-c-opt
+
+module load cmake
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  module load hwloc openmpi hdf5 netcdf python/intel27
+  moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf" "python/intel27")
+  confextra=""
+  PYTHON=python
+elif [[ ${HOSTNAME} == "gollum" ]]; then
+  :;
+else
+  echo "FIXME!"
+  exit 1
+fi
+
+prepare()
+{
+  # standard download (in tmpdir)
+  [[ -d $tmpdir ]] || mkdir -pv $tmpdir
+  pushd $tmpdir
+  makepkg_download $pkgurl
+  # untar and move to destdir
+  makepkg_untar petsc-${pkgver}.tar.gz
+  mv $srcdir $destdir
+  popd
+}
+
+configure()
+{
+  pushd $destdir
+  $PYTHON ./configure \
+    COPTFLAGS="-O2 -march=native" \
+    CXXOPTFLAGS="-O2 -march=native" \
+    FOPTFLAGS="-O2 -march=native" \
+    --with-debugging=no \
+    --with-shared-libraries=yes \
+    --with-hwloc=1 \
+    --with-hwloc-dir=$HWLOC_DIR \
+    --with-hdf5=1 \
+    --with-hdf5-dir=$HDF5_DIR \
+    --with-netcdf=1 \
+    --with-netcdf-dir=$NETCDF_DIR \
+    --download-{metis,parmetis,suitesparse,superlu,scalapack} \
+    --download-{scotch,ptscotch,mumps,hypre,superlu_dist} \
+    --download-{mpi4py,petsc4py} \
+    ${confextra}
+}
+
+build()
+{
+  make -C $destdir all
+}
+
+pre_package() { :; }
+package() { :; }
+post_package() { :; }
+
+testing()
+{
+  make -C $destdir test
+}
+
+# We use our own $pkgmodule since PETSc has unusual directory structure
+pkgmodule=$(cat <<END_HEREDOC
+#%Module1.0
+module load ${moduledeps[*]}
+set PETSC_DIR $destdir
+set PETSC_ARCH $PETSC_ARCH
+setenv PETSC_DIR \$PETSC_DIR
+setenv PETSC_ARCH \$PETSC_ARCH
+
+prepend-path PKG_CONFIG_PATH \$PETSC_DIR/lib/pkgconfig
+prepend-path PYTHONPATH \$PETSC_DIR/lib
+prepend-path LD_LIBRARY_PATH \$PETSC_DIR/lib
+prepend-path LD_LIBRARY_PATH \$PETSC_DIR/lib64
+END_HEREDOC
+)
+
