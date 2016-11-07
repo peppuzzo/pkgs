@@ -1,13 +1,14 @@
 #!/bin/bash -e
 REPO="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 # two versions of module available: git and latest stable
-modulever=git
-#modulever=3.2.10
+#modulever=git
+modulever=3.2.10
 
 # check if module command is available (eg clusters)
 modulemiss=`type module >/dev/null 2>&1 && echo no || echo yes`
-echo "modules available on system = $modulemiss"
+
+echo "REPO: ${REPO}"
+echo "modules missing on system = $modulemiss"
 
 # directory skeleton
 mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
@@ -15,7 +16,7 @@ mkdir -pv $REPO/{modulefiles,buildfiles,src,opt}
 if [ "x${modulemiss}" = "xyes" ]; then
   # download modules
   pushd src
-  if [ "x${modulesver}" = "xgit" ]; then
+  if [ "x${modulever}" = "xgit" ]; then
     if [ -d "modules-git" ]; then
       git -C modules-git pull
     else
@@ -42,40 +43,43 @@ if [ "x${modulemiss}" = "xyes" ]; then
   mkdir build
   cd build
   ../configure \
-    --prefix=$REPO/opt/modules
+    --prefix=$REPO/opt/modules \
+    CPPFLAGS=-DUSE_INTERP_ERRORLINE
     #--with-module-path=$REPO/opt \
     #--with-version-path=$REPO/modules/versions \
-    #CPPFLAGS=-DUSE_INTERP_ERRORLINE
   make install
   popd
 
-  if [ "x${modulesver}"=="git" ]; then
+  if [ "x${modulever}" = "xgit" ]; then
+    MODULES=opt/modules/${modulever}
+    MODULESHOME=$REPO/$MODULES/share
     modulever=3.3.a
+  else
+    MODULES=opt/modules/Modules/${modulever}
+    MODULESHOME=$REPO/$MODULES
   fi
 
   # cleanup
   rm -rf $REPO/src/modules-${modulever}
-
-  MODULESHOME=$REPO/opt/modules/${modulever}/share
 fi
 
 # private modules
 cp ${MODULESHOME}/modulefiles/null $REPO/modulefiles
 
-# create localenv file
-cat >$REPO/localenv.conf <<EOL
+# create local environment file
+cat >$REPO/pkgs.conf <<EOL
 REPO=$REPO
 EOL
 
 # add a few lines to setup modules in case not available externally
 if [ "x${modulemiss}" = "xyes" ]; then
-  cat >>$REPO/localenv.conf <<EOL
+  cat >>$REPO/pkgs.conf <<EOL
 # setup modules if not externally provided
 if [ -z "\${MODULES_SOURCED+x}" ]; then
   # safe-guard
   export MODULES_SOURCED=yes
   # init modules
-  source \$REPO/opt/modules/${modulever}/init/bash
+  source \$REPO/$MODULES/init/bash
   export REPO
   # this is required to have modules available
   # when calling module from makepkg after
@@ -86,7 +90,7 @@ EOL
 fi
 
 # set-up modulefiles directory
-cat >>$REPO/localenv.conf <<EOL
+cat >>$REPO/pkgs.conf <<EOL
 module use-append \$REPO/modulefiles
 export REPO
 # this is required to have modules available
