@@ -1,87 +1,29 @@
 # vim: set ft=sh:
+_pkgver=$pkgver
+source $REPO/buildfiles/petsc-dev
+pkgver=$_pkgver
+
 pkgurl=http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-${pkgver}.tar.gz
+srcdir=petsc-$pkgver
+mpi4pyver=2.0.0
+mpi4pyurl=https://bitbucket.org/mpi4py/mpi4py/downloads/mpi4py-${mpi4pyver}.tar.gz
+petsc4pyver=3.7.0
+petsc4pyurl=https://bitbucket.org/petsc/petsc4py/downloads/petsc4py-${petsc4pyver}.tar.gz
 
-# NOTE: this package provides also petsc4py and mpi4py
+pkgmodule_default=yes
 
-# PETSc has its automatic way to deal with multiple versions, compiled with
-# and without debug symbols, or with different compilers.
-# PETSC_ARCH takes care of this automatically.
-# NOTE: external packages are downloaded in the destination folder since the
-# beginning.
-
-unset PETSC_DIR
-export PETSC_ARCH=arch-linux2-c-opt
-PYTHON=python
-confextra=""
-
-# common modules to all hosts
-module load hwloc openmpi hdf5 netcdf
-moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
-if [[ ${HOSTNAME} == "ics"* ]]; then
-  # cmake is not available on ICS-HPC, and system python is old
-  module load cmake python/intel27
-  moduledeps+=("cmake" "python/intel27")
-elif [[ ${HOSTNAME} == "gollum" ]]; then
-  # python is python2
-  PYTHON=python2
-elif [[ ${HOSTNAME} == "mbpro" ]]; then
-  echo "FIXME!"
-  exit 1
-fi
-
-configure()
+post_package()
 {
-  # We remove here destdir since PETSc automatically installs
-  # dependencies there during config.
-  pushd $tmpdir/$srcdir
-  $PYTHON ./configure \
-    --prefix=$destdir \
-    COPTFLAGS="-O2 -march=native" \
-    CXXOPTFLAGS="-O2 -march=native" \
-    FOPTFLAGS="-O2 -march=native" \
-    --with-debugging=no \
-    --with-shared-libraries=yes \
-    --with-hwloc=1 \
-    --with-hwloc-dir=$HWLOC_DIR \
-    --with-hdf5=1 \
-    --with-hdf5-dir=$HDF5_DIR \
-    --with-netcdf=1 \
-    --with-netcdf-dir=$NETCDF_DIR \
-    --download-{metis,parmetis,suitesparse,superlu,scalapack} \
-    --download-{scotch,ptscotch,mumps,hypre,superlu_dist} \
-    --download-{mpi4py,petsc4py} \
-    ${confextra}
-}
-
-build()
-{
-  pushd $tmpdir/$srcdir
-  make PETSC_DIR=$PWD all
+  pushd $tmpdir
+  for _pkg in "mpi4py" "petsc4py"; do
+    _url=${_pkg}url
+    _ver=${_pkg}ver
+    makepkg_download ${!_url}
+    makepkg_untar $(basename ${!_url})
+    pushd $_pkg-${!_ver}
+    PETSC_DIR=$destdir $PYTHON setup.py install --prefix=$destdir
+    popd
+  done
   popd
 }
-
-pre_package() { :; }
-package()
-{
-  pushd $tmpdir/$srcdir
-  make PETSC_DIR=$PWD install
-  popd
-}
-post_package() { :; }
-
-testing()
-{
-  pushd $tmpdir/$srcdir
-  make PETSC_ARCH= PETSC_DIR=$destdir test
-  popd
-}
-
-# We export PETSC_ARCH as well
-pkgmodule_extra=$(cat <<END_HEREDOC
-set PETSC_ARCH $PETSC_ARCH
-setenv PETSC_ARCH \$PETSC_ARCH
-
-prepend-path PYTHONPATH \$PETSC_DIR/lib
-END_HEREDOC
-)
 

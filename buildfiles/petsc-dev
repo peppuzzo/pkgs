@@ -1,97 +1,93 @@
 # vim: set ft=sh:
-pkgname=petsc
-pkgver=dev
 pkgurl=git@bitbucket.org:petsc/petsc.git
 
+# NOTE: this package provides also petsc4py and mpi4py
+
+# PETSc has its automatic way to deal with multiple versions, compiled with
+# and without debug symbols, or with different compilers.
+# PETSC_ARCH takes care of this automatically.
+# NOTE: external packages are downloaded in the destination folder since the
+# beginning.
+
 unset PETSC_DIR
-unset PETSC_ARCH
-module load hwloc openmpi hdf5 \
-            metis parmetis suitesparse \
-            superlu superlu_dist/5.0.0 scalapack \
-            pastix mumps hypre scotch \
-            python cython numpy mpi4py
+export PETSC_ARCH=arch-linux2-c-opt
+PYTHON=python
+confextra=""
+
+# common modules to all hosts
+module load hwloc openmpi hdf5 netcdf
+moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  # cmake is not available on ICS-HPC, and system python is old
+  module load cmake python/intel27
+  moduledeps+=("cmake" "python/intel27")
+elif [[ ${HOSTNAME} == "gollum" ]]; then
+  # python is python2
+  PYTHON=python2
+elif [[ ${HOSTNAME} == "mbpro" ]]; then
+  echo "FIXME!"
+  exit 1
+fi
 
 configure()
 {
+  # We remove here destdir since PETSc automatically installs
+  # dependencies there during config.
+  [ -d $destdir ] && rm -rfv $destdir
   pushd $tmpdir/$srcdir
-  ./configure \
-    COPTFLAGS="-O3 -arch=native" \
-    CXXOPTFLAGS="-O3 -arch=native" \
-    FOPTFLAGS="-O3 -arch=native" \
+  $PYTHON ./configure \
     --prefix=$destdir \
+    COPTFLAGS="-O2 -march=native" \
+    CXXOPTFLAGS="-O2 -march=native" \
+    FOPTFLAGS="-O2 -march=native" \
     --with-debugging=no \
     --with-shared-libraries=yes \
     --with-hwloc=1 \
     --with-hwloc-dir=$HWLOC_DIR \
-    --with-superlu=1 \
-    --with-superlu-lib=$SUPERLU_DIR/lib/libsuperlu.a \
-    --with-superlu-include=$SUPERLU_DIR/include \
-    --with-metis=1 \
-    --with-metis-dir=$METIS_DIR \
-    --with-parmetis=1 \
-    --with-parmetis-dir=$PARMETIS_DIR \
-    --with-suitesparse=1 \
-    --with-suitesparse-dir=$SUITESPARSE_DIR \
-    --with-scalapack=1 \
-    --with-scalapack-dir=$SCALAPACK_DIR \
-    --with-scotch=1 \
-    --with-scotch-dir=$SCOTCH_DIR \
-    --with-ptscotch=1 \
-    --with-ptscotch-dir=$SCOTCH_DIR \
     --with-hdf5=1 \
     --with-hdf5-dir=$HDF5_DIR \
-    --with-mumps=1 \
-    --with-mumps-dir=$MUMPS_DIR \
-    --with-pastix=1 \
-    --with-pastix-dir=$PASTIX_DIR \
-    --with-hypre=1 \
-    --with-hypre-dir=$HYPRE_DIR \
-    --with-superlu_dist=1 \
-    --with-superlu_dist-lib=$SUPERLUDIST_DIR/lib/libsuperlu_dist.a \
-    --with-superlu_dist-include=$SUPERLUDIST_DIR/include
+    --with-netcdf=1 \
+    --with-netcdf-dir=$NETCDF_DIR \
+    --download-{metis,parmetis,suitesparse,superlu,scalapack} \
+    --download-{scotch,ptscotch,mumps,hypre,superlu_dist} \
+    ${confextra}
 }
 
 build()
 {
   pushd $tmpdir/$srcdir
-  make PETSC_DIR=$PWD PETSC_ARCH=arch-darwin-c-opt all
+  make PETSC_DIR=$PWD all
   popd
 }
 
+pre_package() { :; }
 package()
 {
-  # install new one
   pushd $tmpdir/$srcdir
-  make PETSC_DIR=$PWD PETSC_ARCH=arch-darwin-c-opt install
+  make PETSC_DIR=$PWD install
+  popd
+}
+post_package() { :; }
+
+testing()
+{
+  pushd $tmpdir/$srcdir
+  make PETSC_ARCH= PETSC_DIR=$destdir test
   popd
 }
 
+# We don't use PETSc installation system for PETSc4py, we prefer our own
 post_package()
 {
-  # petsc4py
-  pushd $tmpdir
-  if [[ -d petsc4py ]]; then
-    pushd petsc4py
-    git pull
-    popd
-  else
-    git clone git@bitbucket.org:petsc/petsc4py.git
-  fi
-  pushd petsc4py
-  export PETSC_DIR=$destdir
-  python setup.py install --prefix=$destdir
+  # mpi4py
+  makepkg_git git@bitbucket.org:mpi4py/mpi4py.git $tmpdir/mpi4py
+  pushd $tmpdir/mpi4py
+  $PYTHON setup.py install --prefix=$destdir
   popd
+  # petsc4py
+  makepkg_git git@bitbucket.org:petsc/petsc4py.git $tmpdir/petsc4py
+  pushd $tmpdir/petsc4py
+  PETSC_DIR=$destdir $PYTHON setup.py install --prefix=$destdir
   popd
 }
 
-pkgmodule=$(cat <<-EOT
-#%Module
-module load python numpy mpi4py
-
-set PETSC_DIR $REPO/opt/petsc-$pkgver
-setenv PETSC_DIR \$PETSC_DIR
-
-prepend-path PATH \$PETSC_DIR/bin
-prepend-path PKG_CONFIG_PATH \$PETSC_DIR/lib/pkgconfig
-prepend-path PYTHONPATH \$PETSC_DIR/lib/python2.7/site-packages
-EOT)

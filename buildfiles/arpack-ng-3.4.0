@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+pkgname=arpack-ng
+pkgver=3.4.0
+pkgurl=https://github.com/opencollab/arpack-ng/archive/${pkgver}.tar.gz
+
+module load openmpi
+
+apply_patch()
+{
+  pushd $tmpdir/$srcdir
+  libtoolize
+  ./bootstrap
+  popd
+}
+
+confopts="--enable-mpi --disable-dependency-tracking"
+

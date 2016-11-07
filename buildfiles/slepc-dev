@@ -4,66 +4,57 @@ pkgver=dev
 pkgurl=git@bitbucket.org:slepc/slepc.git
 
 unset SLEPC_DIR
-module load openmpi arpack-ng python cython numpy mpi4py
-module load petsc/dev
+module load petsc/dev arpack-ng
+moduledeps+=("petsc/dev" "arpack-ng")
+PYTHON=python
+
+# common modules to all hosts
+module load hwloc openmpi hdf5 netcdf
+moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
+if [[ ${HOSTNAME} == "gollum" ]]; then
+  # python is python2
+  PYTHON=python2
+elif [[ ${HOSTNAME} == "mbpro" ]]; then
+  echo "FIXME!"
+  exit 1
+fi
 
 configure()
 {
+  [ -d $destdir ] && rm -rfv $destdir
   pushd $tmpdir/$srcdir
-  ./configure \
+  $PYTHON ./configure \
     --prefix=$destdir \
     --download-blopex \
     --with-arpack=1 \
-    --with-arpack-dir=$ARPACK_DIR/lib
+    --with-arpack-dir=$ARPACKNG_DIR/lib
 }
 
 build()
 {
   pushd $tmpdir/$srcdir
-  make SLEPC_DIR=$PWD PETSC_DIR=$PETSC_DIR
+  make SLEPC_DIR=$PWD
   popd
 }
 
 package()
 {
   pushd $tmpdir/$srcdir
-  # install new one
-  make SLEPC_DIR=$tmpdir/$srcdir PETSC_DIR=$PETSC_DIR install
+  make SLEPC_DIR=$PWD install
   popd
 }
 
 testing()
 {
-  pushd $tmpdir/$srcdir
-  make SLEPC_DIR=$destdir PETSC_DIR=$PETSC_DIR test
-  popd
+  make -C $tmpdir/$srcdir SLEPC_DIR=$destdir test
 }
 
 post_package()
 {
   # slepc4py
-  pushd $tmpdir
-  if [[ -d slepc4py ]]; then
-    pushd slepc4py
-    git pull
-    popd
-  else
-    git clone git@bitbucket.org:slepc/slepc4py.git
-  fi
-  pushd slepc4py
-  export SLEPC_DIR=$destdir
-  python setup.py install --prefix=$destdir
-  popd
+  makepkg_git git@bitbucket.org:slepc/slepc4py.git $tmpdir/slepc4py
+  pushd $tmpdir/slepc4py
+  SLEPC_DIR=$destdir $PYTHON setup.py install --prefix=$destdir
   popd
 }
 
-pkgmodule=$(cat <<-EOT
-#%Module
-module load petsc/dev
-set SLEPC_DIR $REPO/opt/slepc-$pkgver
-setenv SLEPC_DIR \$SLEPC_DIR
-
-prepend-path PATH \$SLEPC_DIR/bin
-prepend-path PKG_CONFIG_PATH \$SLEPC_DIR/lib/pkgconfig
-prepend-path PYTHONPATH \$SLEPC_DIR/lib/python2.7/site-packages
-EOT)

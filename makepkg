@@ -38,6 +38,27 @@ makepkg_download()
   fi
 }
 
+makepkg_git()
+{
+  # download or update a git repository
+  if [ -d $2/.git ]; then
+    git -C $2 rebase
+  else
+    git clone $1 $2
+  fi
+}
+
+makepkg_svn()
+{
+  if [ -d $2/.svn ]; then
+    pushd $2
+    svn update
+    popd
+  else
+    svn checkout $1 $2
+  fi
+}
+
 makepkg_untar()
 {
   # prefer bsdtar if available
@@ -75,19 +96,9 @@ prepare()
   mkdir -pv $tmpdir && pushd $tmpdir
   # check if git repository
   if [ "${pkgfile##*.}" == "git" ]; then
-    if [ -d $srcdir/.git ]; then
-      git -C $srcdir rebase
-    else
-      git clone $pkgurl $srcdir
-    fi
+    makepkg_git $pkgurl $srcdir
   elif [ "${pkgurl::3}" == "svn" ]; then
-    if [ -d $srcdir/.svn ]; then
-      pushd $srcdir
-      svn update
-      popd
-    else
-      svn checkout ${pkgurl} ${srcdir}
-    fi
+    makepkg_svn $pkgurl $srcdir
   else
     # standard download
     makepkg_download $pkgurl
@@ -174,7 +185,7 @@ feedmodule()
     echo "#%Module1.0" > $modulefile
     # We set an environment variable [PKGNAME]_DIR to
     # $destdir for convenience, to use as dependency
-    local PKGDIR="`echo $pkgname | awk '{print toupper($0)}'`_DIR"
+    local PKGDIR="$(echo $pkgname | awk '{print toupper(gensub(/[-]/,"","g"))}')_DIR"
     echo "set ${PKGDIR} $destdir" >> $modulefile
     echo "setenv ${PKGDIR} \$${PKGDIR}" >> $modulefile
     # Add extra module dependencies
@@ -207,6 +218,19 @@ feedmodule()
     fi
     if [ -d "${destdir}/share/info" ]; then
       echo "prepend-path INFOPATH \$${PKGDIR}/share/info" >> $modulefile
+    fi
+    # Add python directories
+    _pythoncmd="from distutils.sysconfig import get_python_lib;\
+    print(get_python_lib(False,False,\"\$$PKGDIR\"));"
+    PYTHONDIR=$(echo -e $_pythoncmd | $PYTHON)
+    if [ -d "${PYTHONDIR/\$$PKGDIR/$destdir}" ]; then
+      echo "prepend-path PYTHONPATH $PYTHONDIR" >> $modulefile
+    fi
+
+    # create the default file
+    if [ -n "${pkgmodule_default+x}" ]; then
+      echo "#%Module1.0" > `dirname $modulefile`/.version
+      echo "set ModulesVersion \"$pkgver\"" >> `dirname $modulefile`/.version
     fi
 
   elif [ ! "x${pkgmodule}" = "x" ]; then
@@ -263,6 +287,12 @@ echo "${bold}Build directory:${norm} $builddir"
 echo "${bold}Module file:${norm} $modulefile"
 
 [ -z ${onlymodule+x} ] && onlymodule=no
+
+# By default we don't create a module .version file
+[ -z ${pkgmodule_default+x} ] && pkgmodule_default=no
+
+# check who is PYTHON
+[ -z ${PYTHON+x} ] && PYTHON=python
 
 if [ "x$2" == "x" ]; then
   # run all the commands
