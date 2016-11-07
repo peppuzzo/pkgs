@@ -1,4 +1,4 @@
-localenv.conf
+pkgs.conf
 src
 opt
 modulefiles

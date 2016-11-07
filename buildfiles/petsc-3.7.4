@@ -1,6 +1,5 @@
 # vim: set ft=sh:
 pkgurl=http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-${pkgver}.tar.gz
-srcdir=petsc-$pkgver
 
 # NOTE: this package provides also petsc4py and mpi4py
 
@@ -9,41 +8,34 @@ srcdir=petsc-$pkgver
 # PETSC_ARCH takes care of this automatically.
 # NOTE: external packages are downloaded in the destination folder since the
 # beginning.
-# Thus, we override the default makepkg behaviour here to have the source
-# already in the destination folder.
 
-export PETSC_DIR=$destdir
+unset PETSC_DIR
 export PETSC_ARCH=arch-linux2-c-opt
+PYTHON=python
+confextra=""
 
-module load cmake
+# common modules to all hosts
+module load hwloc openmpi hdf5 netcdf
+moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
 if [[ ${HOSTNAME} == "ics"* ]]; then
-  module load hwloc openmpi hdf5 netcdf python/intel27
-  moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf" "python/intel27")
-  confextra=""
-  PYTHON=python
+  # cmake is not available on ICS-HPC, and system python is old
+  module load cmake python/intel27
+  moduledeps+=("cmake" "python/intel27")
 elif [[ ${HOSTNAME} == "gollum" ]]; then
-  :;
-else
+  # python is python2
+  PYTHON=python2
+elif [[ ${HOSTNAME} == "mbpro" ]]; then
   echo "FIXME!"
   exit 1
 fi
 
-prepare()
-{
-  # standard download (in tmpdir)
-  [[ -d $tmpdir ]] || mkdir -pv $tmpdir
-  pushd $tmpdir
-  makepkg_download $pkgurl
-  # untar and move to destdir
-  makepkg_untar petsc-${pkgver}.tar.gz
-  mv $srcdir $destdir
-  popd
-}
-
 configure()
 {
-  pushd $destdir
+  # We remove here destdir since PETSc automatically installs
+  # dependencies there during config.
+  pushd $tmpdir/$srcdir
   $PYTHON ./configure \
+    --prefix=$destdir \
     COPTFLAGS="-O2 -march=native" \
     CXXOPTFLAGS="-O2 -march=native" \
     FOPTFLAGS="-O2 -march=native" \
@@ -63,31 +55,33 @@ configure()
 
 build()
 {
-  make -C $destdir all
+  pushd $tmpdir/$srcdir
+  make PETSC_DIR=$PWD all
+  popd
 }
 
 pre_package() { :; }
-package() { :; }
+package()
+{
+  pushd $tmpdir/$srcdir
+  make PETSC_DIR=$PWD install
+  popd
+}
 post_package() { :; }
 
 testing()
 {
-  make -C $destdir test
+  pushd $tmpdir/$srcdir
+  make PETSC_ARCH= PETSC_DIR=$destdir test
+  popd
 }
 
-# We use our own $pkgmodule since PETSc has unusual directory structure
-pkgmodule=$(cat <<END_HEREDOC
-#%Module1.0
-module load ${moduledeps[*]}
-set PETSC_DIR $destdir
+# We export PETSC_ARCH as well
+pkgmodule_extra=$(cat <<END_HEREDOC
 set PETSC_ARCH $PETSC_ARCH
-setenv PETSC_DIR \$PETSC_DIR
 setenv PETSC_ARCH \$PETSC_ARCH
 
-prepend-path PKG_CONFIG_PATH \$PETSC_DIR/lib/pkgconfig
 prepend-path PYTHONPATH \$PETSC_DIR/lib
-prepend-path LD_LIBRARY_PATH \$PETSC_DIR/lib
-prepend-path LD_LIBRARY_PATH \$PETSC_DIR/lib64
 END_HEREDOC
 )
 
