@@ -185,7 +185,7 @@ feedmodule()
     echo "#%Module1.0" > $modulefile
     # We set an environment variable [PKGNAME]_DIR to
     # $destdir for convenience, to use as dependency
-    local PKGDIR="$(echo $pkgname | awk '{print toupper(gensub(/[-]/,"","g"))}')_DIR"
+    local PKGDIR="$(echo $pkgname | gawk '{print toupper(gensub(/[-]/,"","g"))}')_DIR"
     echo "set ${PKGDIR} $destdir" >> $modulefile
     echo "setenv ${PKGDIR} \$${PKGDIR}" >> $modulefile
     # Add extra module dependencies

@@ -4,11 +4,12 @@ pkgver=3.4.0
 pkgurl=https://github.com/opencollab/arpack-ng/archive/${pkgver}.tar.gz
 
 module load openmpi
+moduledeps+=("openmpi")
+export F77=mpif77
 
 apply_patch()
 {
   pushd $tmpdir/$srcdir
-  libtoolize
   ./bootstrap
   popd
 }
