@@ -1,19 +1,18 @@
 # vim: filetype=sh
-pkgname=vtk-py2
-pkgver=dev
-pkgurl=https://gitlab.kitware.com/vtk/vtk.git
-srcdir=VTK-dev
-destdir=$REPO/opt/$pkgname-$pkgver
+pkgurl=http://www.vtk.org/files/release/${pkgver:0:3}/VTK-${pkgver}.tar.gz
+srcdir=VTK-$pkgver
 
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
-module load hdf5 netcdf-cxx mpi4py-py2
+module load hdf5 netcdf-cxx
 module load embree ospray
+moduledeps+=("hdf5" "netcdf-cxx" "embree" "ospray")
 
 export CXX=mpic++
 export CC=mpicc
 export HDF5_ROOT=$HDF5_DIR
 export embree_DIR=$EMBREE_DIR
+export PYTHON=python2
 
 apply_patch()
 {
@@ -39,7 +38,6 @@ confopts=$(cat <<END_HEREDOC
 -D Module_vtkInfovisBoostGraphAlgorithms:BOOL=ON
 -D Module_vtkRenderingFreeTypeFontConfig:BOOL=ON
 -D Module_vtkRenderingMatplotlib:BOOL=ON
--D Module_vtkRenderingOSPRay:BOOL=ON
 -D Module_vtkIOXdmf2:BOOL=OFF
 -D Module_vtkIOXdmf3:BOOL=ON
 -D VTK_USE_SYSTEM_PNG:BOOL=ON
@@ -48,7 +46,6 @@ confopts=$(cat <<END_HEREDOC
 -D VTK_USE_SYSTEM_ZLIB:BOOL=ON
 -D VTK_USE_SYSTEM_EXPAT:BOOL=ON
 -D VTK_USE_SYSTEM_HDF5:BOOL=ON
--D VTK_USE_SYSTEM_MPI4PY:BOOL=ON
 -D VTK_USE_SYSTEM_NETCDF:BOOL=ON
 -D VTK_USE_SYSTEM_FREETYPE:BOOL=ON
 -D VTK_USE_SYSTEM_LIBXML2:BOOL=ON
@@ -64,20 +61,7 @@ confopts=$(cat <<END_HEREDOC
 -D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so
 -D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7
 -D OSPRAY_INSTALL_DIR:PATH=$OSPRAY_DIR
-END_HEREDOC
-)
-
-pkgmodule=$(cat <<END_HEREDOC
-#%Module
-module load hdf5 netcdf-cxx mpi4py-py2
-module load ospray
-
-set VTK_DIR $destdir
-setenv VTK_DIR \$VTK_DIR
-
-prepend-path PATH \$VTK_DIR/bin
-prepend-path PYTHONPATH \$VTK_DIR/lib/python2.7/site-packages
-prepend-path LD_LIBRARY_PATH \$VTK_DIR/lib
+-D Module_vtkRenderingOSPRay:BOOL=ON
 END_HEREDOC
 )
 

@@ -1,10 +1,9 @@
 # vim: set ft=sh:
-pkgname=ospray
-pkgver=1.0.0
 pkgurl=https://github.com/ospray/OSPRay/archive/v${pkgver}.tar.gz
 srcdir=OSPRay-${pkgver}
 
 module load embree
+moduledeps+=("embree")
 export USE_CMAKE=1
 export embree_DIR=$EMBREE_DIR
 
@@ -18,27 +17,16 @@ END_HEREDOC
 
 apply_patch()
 {
-  patch -Np1 < $REPO/buildfiles/ospray_cos_gcc61.patch
-  patch -Np0 < $REPO/buildfiles/ospray_tbb_2017.patch
+  patch -Np0 < $REPO/buildfiles/ospray_cmake37.patch
+#  patch -Np1 < $REPO/buildfiles/ospray_cos_gcc61.patch
+#  patch -Np0 < $REPO/buildfiles/ospray_tbb_2017.patch
 }
 
 post_package()
 {
   pushd $destdir
-  ln -svf lib64 lib
-  rm lib/libtbb.so.2
-  rm lib/libtbbmalloc.so.2
+  rm lib64/libtbb.so.2
+  rm lib64/libtbbmalloc.so.2
   popd
 }
 
-pkgmodule=$(cat <<END_HEREDOC
-#%Module
-module load embree
-
-set OSPRAY_DIR $destdir
-setenv OSPRAY_DIR \$OSPRAY_DIR
-
-prepend-path PATH \$OSPRAY_DIR/bin
-prepend-path LD_LIBRARY_PATH \$OSPRAY_DIR/lib
-END_HEREDOC
-)

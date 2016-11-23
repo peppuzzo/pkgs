@@ -1,0 +1,4 @@
+# vim: set ft=sh:
+pkgurl=https://github.com/embree/embree/archive/v${pkgver}.tar.gz
+export USE_CMAKE=1
+
