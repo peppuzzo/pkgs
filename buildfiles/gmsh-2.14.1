@@ -1,0 +1,26 @@
+# vim: set ft=sh:
+pkgurl=http://www.geuz.org/gmsh/src/gmsh-${pkgver}-source.tgz
+srcdir=$pkgname-$pkgver-source
+
+export USE_CMAKE=1
+export MAKE_NUMJOBS=8
+
+module load opencascade slepc
+moduledeps+=("opencascade" "slepc")
+
+confopts=$(cat <<END_HEREDOC
+-D CMAKE_INSTALL_PREFIX:PATH=$destdir
+-D ENABLE_OS_SPECIFIC_INSTALL:BOOL=OFF
+-D GMSH_BIN:PATH=$destdir/bin
+-D GMSH_LIB:PATH=$destdir/lib
+-D GMSH_DOC:PATH=$destdir/doc
+-D GMSH_MAN:PATH=$destdir/man
+-D ENABLE_NATIVE_FILE_CHOOSER:BOOL=ON
+-D ENABLE_BUILD_LIB:BOOL=ON
+-D ENABLE_BUILD_SHARED:BOOL=ON
+-D ENABLE_FLTK:BOOL=ON
+-D ENABLE_MPI:BOOL=ON
+-Wno-dev
+END_HEREDOC
+)
+

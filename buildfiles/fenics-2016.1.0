@@ -1,10 +1,9 @@
 # vim: set ft=sh:
-pkgname=fenics-py2
-pkgver=2016.1.0
 srcdir=dolfin-${pkgver}
 baseurl=https://bitbucket.org/fenics-project
 
-module load hdf5 openmpi petsc-py2 slepc-py2 vtk-py2
+module load hdf5 openmpi petsc slepc vtk
+moduledeps+=("hdf5" "openmpi" "petsc" "slepc" "vtk")
 
 # necessary for python dependencies
 export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
@@ -12,16 +11,16 @@ export PATH=$PATH:$destdir/bin
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
 export HDF5_ROOT=$HDF5_DIR
+export PYTHON=python2
 
 prepare()
 {
   # we override default behaviour to download all dependecies
-  mkdir -pv $tmpdir
-  pushd $tmpdir
+  mkdir -pv $tmpdir && pushd $tmpdir
   # fenics-project dependencies
   for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin" "mshr"; do
-    curl -O -L ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
-    tar xvfz ${fenicspkg}-${pkgver}.tar.gz
+    makepkg_download ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
+    makepkg_untar ${fenicspkg}-${pkgver}.tar.gz
     pushd ${fenicspkg}-${pkgver}
     # patches
     if [[ "x${fenicspkg}" == "xdolfin" ]]; then
@@ -42,7 +41,7 @@ prepare()
   mkdir -pv $destdir/lib/python2.7/site-packages
   for fenicspkg in "ufl" "fiat" "instant" "ffc"; do
     pushd $tmpdir/${fenicspkg}-${pkgver}
-    python2 setup.py install --prefix=$destdir
+    $PYTHON setup.py install --prefix=$destdir
     popd
   done
 }
@@ -79,11 +78,7 @@ post_package()
   make install
   popd
   # libadjoint
-  if [[ -d libadjoint ]]; then
-    git -C libadjoint pull
-  else
-    git clone git@bitbucket.org:dolfin-adjoint/libadjoint.git
-  fi
+  makepkg_git git@bitbucket.org:dolfin-adjoint/libadjoint.git libadjoint
   pushd libadjoint
   [[ -d build ]] && rm -rf build
   mkdir -pv build && cd build
@@ -96,36 +91,15 @@ post_package()
   make install
   popd
   # dolfin-adjoint
-  if [[ -d dolfin-adjoint ]]; then
-    git -C dolfin-adjoint pull
-  else
-    git clone git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git
-  fi
+  makepkg_git git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git dolfin-adjoint
   pushd dolfin-adjoint
   python2 setup.py install --prefix=$destdir
   popd
   # moola
-  if [[ -d moola ]]; then
-    git -C moola pull
-  else
-    git clone https://github.com/funsim/moola.git
-  fi
+  makepkg_git https://github.com/funsim/moola.git moola
   pushd moola
   python2 setup.py install --prefix=$destdir
   popd
   popd
 }
 
-pkgmodule=$(cat <<END_HEREDOC
-#%Module
-module load hdf5 openmpi petsc-py2 slepc-py2 vtk-py2 gmsh
-
-set FENICS_DIR $destdir
-
-prepend-path PATH \$FENICS_DIR/bin
-prepend-path MANPATH \$FENICS_DIR/share/man
-prepend-path PKG_CONFIG_PATH \$FENICS_DIR/lib/pkgconfig
-prepend-path PYTHONPATH \$FENICS_DIR/lib/python2.7/site-packages
-prepend-path LD_LIBRARY_PATH \$FENICS_DIR/lib
-END_HEREDOC
-)
