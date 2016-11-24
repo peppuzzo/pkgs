@@ -1,74 +1,65 @@
 # vim: filetype=sh
-pkgname=vtk-py3
-pkgver=dev
-pkgurl=https://gitlab.kitware.com/vtk/vtk.git
-srcdir=VTK-dev
-destdir=$REPO/opt/$pkgname-$pkgver
+pkgurl=http://paraview.org/files/v${pkgver:0:3}/ParaView-v${pkgver}.tar.gz
+srcdir=ParaView-v$pkgver
 
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
-module load hdf5 netcdf-cxx mpi4py-py3
+module load openmpi
 module load embree ospray
+moduledeps+=("openmpi" "embree" "ospray")
 
+# NOTE not using system HDF5 becuse Xdmf does not support it properly
+export PYTHON=/usr/bin/python2
 export CXX=mpic++
 export CC=mpicc
-export HDF5_ROOT=$HDF5_DIR
+#export HDF5_ROOT=/usr
 export embree_DIR=$EMBREE_DIR
+
+apply_patch()
+{
+  # python is python2
+  sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+      -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+      -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
+      -i $(find . -name '*.py')
+}
 
 confopts=$(cat <<END_HEREDOC
 -D CMAKE_BUILD_TYPE:STRING=Release
 -D BUILD_SHARED_LIBS:BOOL=ON
+-D PARAVIEW_QT_VERSION=5
+-D VTK_QT_VERSION=5
 -D VTK_Group_Imaging:BOOL=ON
 -D VTK_Group_MPI:BOOL=ON
 -D VTK_Group_Views:BOOL=ON
 -D VTK_Group_Qt:BOOL=ON
--D VTK_Group_Tk:BOOL=ON
--D VTK_QT_VERSION:STRING=5
 -D Module_vtkRenderingParallel:BOOL=ON
--D Module_vtkDICOM:BOOL=ON
 -D Module_vtkInfovisBoost:BOOL=ON
 -D Module_vtkInfovisBoostGraphAlgorithms:BOOL=ON
 -D Module_vtkRenderingFreeTypeFontConfig:BOOL=ON
 -D Module_vtkRenderingMatplotlib:BOOL=ON
 -D Module_vtkRenderingOSPRay:BOOL=ON
--D Module_vtkIOXdmf2:BOOL=OFF
--D Module_vtkIOXdmf3:BOOL=ON
 -D VTK_USE_SYSTEM_PNG:BOOL=ON
 -D VTK_USE_SYSTEM_TIFF:BOOL=ON
 -D VTK_USE_SYSTEM_JPEG:BOOL=ON
 -D VTK_USE_SYSTEM_ZLIB:BOOL=ON
 -D VTK_USE_SYSTEM_EXPAT:BOOL=ON
--D VTK_USE_SYSTEM_HDF5:BOOL=ON
--D VTK_USE_SYSTEM_MPI4PY:BOOL=ON
--D VTK_USE_SYSTEM_NETCDF:BOOL=ON
 -D VTK_USE_SYSTEM_FREETYPE:BOOL=ON
--D VTK_USE_SYSTEM_LIBXML2:BOOL=ON
+-D VTK_USE_SYSTEM_FFMPEG:BOOL=ON
 -D VTK_RENDERING_BACKEND:STRING=OpenGL2
--D NETCDF_DIR:PATH=$NETCDF_DIR
--D NETCDF_CXX_ROOT:PATH=$NETCDFCXX_DIR
+-D PARAVIEW_USE_OSPRAY:BOOL=ON
+-D PARAVIEW_ENABLE_FFMPEG:BOOL=ON
 -D BUILD_EXAMPLES:BOOL=OFF
 -D BUILD_TESTING:BOOL=OFF
+-D PARAVIEW_ENABLE_PYTHON:BOOL=ON
+-D PARAVIEW_ENABLE_XDMF3:BOOL=ON
 -D VTK_WRAP_PYTHON:BOOL=ON
 -D VTK_LEGACY_REMOVE:BOOL=ON
 -D VTK_USE_CXX11_FEATURES=ON
--D PYTHON_EXECUTABLE:PATH=/usr/bin/python
--D PYTHON_LIBRARY:PATH=`python-config --prefix`/lib/libpython3.5m.so
--D PYTHON_INCLUDE_DIR:PATH=`python-config --prefix`/include/python3.5m
+-D PYTHON_EXECUTABLE:PATH=$PYTHON
+-D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so
+-D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7
 -D OSPRAY_INSTALL_DIR:PATH=$OSPRAY_DIR
-END_HEREDOC
-)
-
-pkgmodule=$(cat <<END_HEREDOC
-#%Module
-module load hdf5 netcdf-cxx mpi4py-py3
-module load ospray
-
-set VTK_DIR $destdir
-setenv VTK_DIR \$VTK_DIR
-
-prepend-path PATH \$VTK_DIR/bin
-prepend-path PYTHONPATH \$VTK_DIR/lib/python3.5/site-packages
-prepend-path LD_LIBRARY_PATH \$VTK_DIR/lib
 END_HEREDOC
 )
 
