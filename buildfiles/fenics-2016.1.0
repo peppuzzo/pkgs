@@ -3,7 +3,7 @@ srcdir=dolfin-${pkgver}
 baseurl=https://bitbucket.org/fenics-project
 
 module load hdf5 openmpi petsc slepc vtk
-moduledeps+=("hdf5" "openmpi" "petsc" "slepc" "vtk")
+moduledeps+=("hdf5" "openmpi" "petsc" "slepc" "vtk" "gmsh")
 
 # necessary for python dependencies
 export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
