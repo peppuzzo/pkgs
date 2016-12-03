@@ -5,8 +5,8 @@ srcdir=VTK-$pkgver
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
 module load hdf5 netcdf-cxx
-module load embree ospray
-moduledeps+=("hdf5" "netcdf-cxx" "embree" "ospray")
+module load embree ospray petsc
+moduledeps+=("hdf5" "netcdf-cxx" "embree" "ospray" "petsc")
 
 export CXX=mpic++
 export CC=mpicc
@@ -14,14 +14,33 @@ export HDF5_ROOT=$HDF5_DIR
 export embree_DIR=$EMBREE_DIR
 export PYTHON=python2
 
-apply_patch()
-{
+PYTHON=python
+confextra=""
+DYN=so
+
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  # cmake is not available on ICS-HPC, and system python is old
+  module load cmake python/intel27
+  moduledeps+=("cmake" "python/intel27")
+elif [[ ${HOSTNAME} == "gollum" ]]; then
   # python is python2
-  sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
-      -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
-      -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
-      -i $(find . -name '*.py')
-}
+  PYTHON=python2
+  apply_patch()
+  {
+    sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+        -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+        -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
+        -i $(find . -name '*.py')
+  }
+  confextra+="-D VTK_Group_Qt:BOOL=ON -D VTK_QT_VERSION:STRING=5"
+elif [[ ${HOSTNAME} == "mbpro" ]]; then
+  PYTHON=python
+  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+  confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
+  DYN=dylib
+fi
 
 confopts=$(cat <<END_HEREDOC
 -D CMAKE_BUILD_TYPE:STRING=Release
@@ -29,9 +48,7 @@ confopts=$(cat <<END_HEREDOC
 -D VTK_Group_Imaging:BOOL=ON
 -D VTK_Group_MPI:BOOL=ON
 -D VTK_Group_Views:BOOL=ON
--D VTK_Group_Qt:BOOL=ON
 -D VTK_Group_Tk:BOOL=ON
--D VTK_QT_VERSION:STRING=5
 -D Module_vtkRenderingParallel:BOOL=ON
 -D Module_vtkDICOM:BOOL=ON
 -D Module_vtkInfovisBoost:BOOL=ON
@@ -49,6 +66,7 @@ confopts=$(cat <<END_HEREDOC
 -D VTK_USE_SYSTEM_NETCDF:BOOL=ON
 -D VTK_USE_SYSTEM_FREETYPE:BOOL=ON
 -D VTK_USE_SYSTEM_LIBXML2:BOOL=ON
+-D VTK_USE_SYSTEM_MPI4PY:BOOL=ON
 -D VTK_RENDERING_BACKEND:STRING=OpenGL2
 -D NETCDF_DIR:PATH=$NETCDF_DIR
 -D NETCDF_CXX_ROOT:PATH=$NETCDFCXX_DIR
@@ -57,11 +75,12 @@ confopts=$(cat <<END_HEREDOC
 -D VTK_WRAP_PYTHON:BOOL=ON
 -D VTK_LEGACY_REMOVE:BOOL=ON
 -D VTK_USE_CXX11_FEATURES=ON
--D PYTHON_EXECUTABLE:PATH=/usr/bin/python2
--D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so
--D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7
+-D PYTHON_EXECUTABLE:PATH=$(which $PYTHON)
+-D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN
+-D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7
 -D OSPRAY_INSTALL_DIR:PATH=$OSPRAY_DIR
 -D Module_vtkRenderingOSPRay:BOOL=ON
+$confextra
 END_HEREDOC
 )
 

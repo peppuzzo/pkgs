@@ -15,8 +15,7 @@ if [[ ${HOSTNAME} == "gollum" ]]; then
   # python is python2
   PYTHON=python2
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
-  echo "FIXME!"
-  exit 1
+  PYTHON=python
 fi
 
 configure()

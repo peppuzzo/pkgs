@@ -2,3 +2,12 @@
 pkgurl=https://github.com/embree/embree/archive/v${pkgver}.tar.gz
 export USE_CMAKE=1
 
+if [[ ${HOSTNAME} == "mbpro" ]]; then
+  confopts="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12 -DEMBREE_MAX_ISA:STRING=AVX"
+  apply_patch()
+  {
+    # SSE4.2 header files missing when compiled with 10.12 target
+    patch -Np1 < $REPO/buildfiles/embree_sse42.patch
+  }
+fi
+

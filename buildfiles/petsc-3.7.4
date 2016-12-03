@@ -18,6 +18,7 @@ post_package()
   for _pkg in "mpi4py" "petsc4py"; do
     _url=${_pkg}url
     _ver=${_pkg}ver
+    echo ${!_url}
     makepkg_download ${!_url}
     makepkg_untar $(basename ${!_url})
     pushd $_pkg-${!_ver}

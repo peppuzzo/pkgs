@@ -11,7 +11,29 @@ export PATH=$PATH:$destdir/bin
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
 export HDF5_ROOT=$HDF5_DIR
-export PYTHON=python2
+export PYTHON=python
+
+PYTHON=python
+confextra=""
+DYN=so
+
+if [[ ${HOSTNAME} == "ics"* ]]; then
+  # cmake is not available on ICS-HPC, and system python is old
+  module load cmake python/intel27
+  moduledeps+=("cmake" "python/intel27")
+elif [[ ${HOSTNAME} == "gollum" ]]; then
+  # python is python2
+  PYTHON=python2
+  export CXXFLAGS="-fext-numeric-literals"
+elif [[ ${HOSTNAME} == "mbpro" ]]; then
+  PYTHON=python
+  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+  confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
+  DYN=dylib
+fi
+
 
 prepare()
 {
@@ -46,15 +68,14 @@ prepare()
   done
 }
 
-export CXXFLAGS="-fext-numeric-literals"
 confopts=$(cat <<END_HEREDOC
 -D BUILD_SHARED_LIBS:BOOL=ON
 -D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
 -D DOLFIN_ENABLE_DOCS:BOOL=OFF
 -D DOLFIN_ENABLE_TESTING:BOOL=OFF
--D PYTHON_EXECUTABLE:PATH=/usr/bin/python2
--D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so
--D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7
+-D PYTHON_EXECUTABLE:PATH=$(which $PYTHON)
+-D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN
+-D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7
 END_HEREDOC
 )
 
@@ -71,9 +92,9 @@ post_package()
   mkdir -pv build && cd build
   cmake \
     -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D PYTHON_EXECUTABLE:PATH=/usr/bin/python2 \
-    -D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so \
-    -D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7 \
+    -D PYTHON_EXECUTABLE:PATH=$(which $PYTHON) \
+    -D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN \
+    -D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7 \
     ../
   make install
   popd
@@ -84,21 +105,21 @@ post_package()
   mkdir -pv build && cd build
   cmake \
     -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D PYTHON_EXECUTABLE:PATH=/usr/bin/python2 \
-    -D PYTHON_LIBRARY:PATH=`python2-config --prefix`/lib/libpython2.7.so \
-    -D PYTHON_INCLUDE_DIR:PATH=`python2-config --prefix`/include/python2.7 \
+    -D PYTHON_EXECUTABLE:PATH=$(which $PYTHON) \
+    -D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN \
+    -D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7 \
     ../
   make install
   popd
   # dolfin-adjoint
   makepkg_git git@bitbucket.org:dolfin-adjoint/dolfin-adjoint.git dolfin-adjoint
   pushd dolfin-adjoint
-  python2 setup.py install --prefix=$destdir
+  $PYTHON setup.py install --prefix=$destdir
   popd
   # moola
   makepkg_git https://github.com/funsim/moola.git moola
   pushd moola
-  python2 setup.py install --prefix=$destdir
+  $PYTHON setup.py install --prefix=$destdir
   popd
   popd
 }

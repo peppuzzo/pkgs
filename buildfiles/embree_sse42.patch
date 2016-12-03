@@ -1,0 +1,10 @@
+--- embree-2.13.0/common/math/math.h.old	2016-12-03 17:00:19.000000000 +0100
++++ embree-2.13.0/common/math/math.h	2016-12-03 17:00:29.000000000 +0100
+@@ -22,6 +22,7 @@
+ 
+ #include <emmintrin.h>
+ #include <xmmintrin.h>
++#include <nmmintrin.h>
+ 
+ #if defined(__WIN32__)
+ #if (__MSV_VER <= 1700)

@@ -6,12 +6,19 @@ module load embree
 moduledeps+=("embree")
 export USE_CMAKE=1
 export embree_DIR=$EMBREE_DIR
+confextra=""
+
+if [[ ${HOSTNAME} == "mbpro" ]]; then
+  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+fi
 
 confopts=$(cat <<END_HEREDOC
 -DOSPRAY_APPS_QTVIEWER:BOOL=OFF
+-DOSPRAY_ZIP_MODE:BOOL=OFF
 -DOSPRAY_APPS_VOLUMEVIEWER:BOOL=OFF
 -DOSPRAY_BUILD_MIC_SUPPORT:BOOL=OFF
 -DOSPRAY_USE_EXTERNAL_EMBREE:BOOL=ON
+$confextra
 END_HEREDOC
 )
 
@@ -20,13 +27,5 @@ apply_patch()
   patch -Np0 < $REPO/buildfiles/ospray_cmake37.patch
 #  patch -Np1 < $REPO/buildfiles/ospray_cos_gcc61.patch
 #  patch -Np0 < $REPO/buildfiles/ospray_tbb_2017.patch
-}
-
-post_package()
-{
-  pushd $destdir
-  rm lib64/libtbb.so.2
-  rm lib64/libtbbmalloc.so.2
-  popd
 }
 
