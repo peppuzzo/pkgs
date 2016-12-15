@@ -17,6 +17,11 @@ PYTHON=python
 confextra=""
 DYN=so
 
+fenicspkgs=("ufl" "fiat" "instant" "ffc" "dolfin" "mshr")
+if [ "x${pkgver}" == "x2016.2.0" ]; then
+  fenicspkgs+=("dijitso")
+fi
+
 if [[ ${HOSTNAME} == "ics"* ]]; then
   # cmake is not available on ICS-HPC, and system python is old
   module load cmake python/intel27
@@ -40,16 +45,24 @@ prepare()
   # we override default behaviour to download all dependecies
   mkdir -pv $tmpdir && pushd $tmpdir
   # fenics-project dependencies
-  for fenicspkg in "ufl" "fiat" "instant" "ffc" "dolfin" "mshr"; do
+  for fenicspkg in "${fenicspkgs[@]}"; do
     makepkg_download ${baseurl}/${fenicspkg}/downloads/${fenicspkg}-${pkgver}.tar.gz
     makepkg_untar ${fenicspkg}-${pkgver}.tar.gz
     pushd ${fenicspkg}-${pkgver}
     # patches
     if [[ "x${fenicspkg}" == "xdolfin" ]]; then
       patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-      git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
+      if [ "x$pkgver" == "x2016.1.0" ]; then
+        git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
+      fi
     elif [[ "x${fenicspkg}" == "xinstant" ]]; then
-      patch -Np1 < $REPO/buildfiles/instant_python_exe.patch
+      if [ "x$pkgver" == "x2016.1.0" ]; then
+        patch -Np1 < $REPO/buildfiles/instant_python_exe.patch
+      fi
+    elif [[ "x${fenicspkg}" == "xmshr" ]]; then
+      if [ "x$pkgver" == "x2016.2.0" ]; then
+        patch -Np0 < $REPO/buildfiles/mshr_vtk_version.patch
+      fi
     fi
     popd
   done
@@ -61,10 +74,12 @@ prepare()
   [[ -d $destdir ]] && rm -rfv $destdir
   # install dependencies
   mkdir -pv $destdir/lib/python2.7/site-packages
-  for fenicspkg in "ufl" "fiat" "instant" "ffc"; do
-    pushd $tmpdir/${fenicspkg}-${pkgver}
-    $PYTHON setup.py install --prefix=$destdir
-    popd
+  for fenicspkg in "dijitso" "ufl" "fiat" "instant" "ffc"; do
+    if [ -d "$tmpdir/${fenicspkg}-${pkgver}" ]; then
+      pushd $tmpdir/${fenicspkg}-${pkgver}
+      $PYTHON setup.py install --prefix=$destdir
+      popd
+    fi
   done
 }
 
