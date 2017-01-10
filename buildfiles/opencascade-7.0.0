@@ -7,12 +7,25 @@ moduledeps+=("vtk")
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
 
+confextra=""
+
+if [[ ${HOSTNAME} == "mbpro" ]]; then
+  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+  confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
+  confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
+  # Remove VTK, probably never used and it requires X11
+  confextra+=" -DUSE_VTK:BOOL=OFF"
+  export MAKE_NUMJOBS=5
+fi
+
 confopts=$(cat <<END_HEREDOC
 -D INSTALL_DIR:PATH=$destdir
 -D CMAKE_PREFIX_PATH:PATH=$destdir
 -D CMAKE_INCLUDE_PATH:PATH=$destdir/lib
 -D USE_TBB:BOOL=ON
 -D USE_VTK:BOOL=ON
+$confextra
 END_HEREDOC
 )
 
@@ -26,3 +39,4 @@ setenv OCC_DIR \$OPENCASCADE_DIR
 setenv CASROOT \$OPENCASCADE_DIR
 END_HEREDOC
 )
+

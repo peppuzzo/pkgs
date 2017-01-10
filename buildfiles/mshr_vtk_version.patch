@@ -1,5 +1,5 @@
---- /data/repo/pkgs/src/fenics-2016.2.0/mshr-2016.2.0/src/VTPFileReader.cpp.old	2016-12-15 06:49:31.536059843 +0100
-+++ /data/repo/pkgs/src/fenics-2016.2.0/mshr-2016.2.0/src/VTPFileReader.cpp	2016-12-15 06:49:51.709394437 +0100
+--- src/VTPFileReader.cpp.old	2016-12-15 06:49:31.536059843 +0100
++++ src/VTPFileReader.cpp	2016-12-15 06:49:51.709394437 +0100
 @@ -19,6 +19,7 @@
  #include <dolfin/log/log.h>
  
