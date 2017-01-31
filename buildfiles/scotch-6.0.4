@@ -1,17 +1,10 @@
 # vim: filetype=sh
-pkgname=scotch
-pkgver=6.0.4
 baseurl=http://gforge.inria.fr/frs/download.php/file/34618
 pkgurl=${baseurl}/scotch_${pkgver}.tar.gz
 srcdir=scotch_${pkgver}/src
 
 module load openmpi
-
-pkgmodule=$(cat <<-EOT
-#%Module
-set SCOTCH_DIR $REPO/opt/scotch-$pkgver
-setenv SCOTCH_DIR \$SCOTCH_DIR
-EOT)
+moduledeps+=('openmpi')
 
 configure()
 {
@@ -34,7 +27,7 @@ CFLAGS += -DCOMMON_PTHREAD -DCOMMON_PTHREAD_BARRIER
 CFLAGS += -DCOMMON_RANDOM_FIXED_SEED -DCOMMON_TIMING_OLD
 CFLAGS += \$(PTHREAD) -DSCOTCH_RENAME
 CLIBFLAGS = -fPIC
-LDFLAGS = -lm -lz
+LDFLAGS = -lm -lz -lpthread
 CP = cp
 LEX = flex -Pscotchyy -olex.yy.c
 LN = ln

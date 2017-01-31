@@ -1,0 +1,9 @@
+# vim: set ft=sh:
+pkgurl=https://github.com/westes/flex.git
+
+apply_patch()
+{
+  pushd $tmpdir/$srcdir
+  ./autogen.sh
+  popd
+}

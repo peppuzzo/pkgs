@@ -24,6 +24,8 @@ if [[ ${HOSTNAME} == "ics"* ]]; then
 elif [[ ${HOSTNAME} == "gollum" ]]; then
   # python is python2
   PYTHON=python2
+  # flex 2.6.3 isn't working, use our own until 2.6.4 is out
+  module load flex
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
   PYTHON=python
 fi
@@ -72,6 +74,7 @@ testing()
 {
   pushd $tmpdir/$srcdir
   make PETSC_ARCH= PETSC_DIR=$destdir test
+  make PETSC_DIR=$destdir PETSC_ARCH= streams
   popd
 }
 
