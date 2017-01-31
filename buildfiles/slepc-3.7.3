@@ -7,7 +7,9 @@ pkgurl=http://www.grycap.upv.es/slepc/download/distrib/slepc-$pkgver.tar.gz
 slepc4pyver=3.7.0
 slepc4py=https://bitbucket.org/slepc/slepc4py/downloads/slepc4py-${slepc4pyver}.tar.gz
 
-module switch petsc/dev petsc
+module unload petsc/dev
+module load petsc
+echo $PETSC_DIR
 moduledeps=( "${moduledeps[@]/petsc\/dev/petsc}" )
 
 pkgmodule_default=yes

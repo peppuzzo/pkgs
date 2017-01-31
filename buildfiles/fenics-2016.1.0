@@ -52,6 +52,7 @@ prepare()
     # patches
     if [[ "x${fenicspkg}" == "xdolfin" ]]; then
       patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
+      patch -Np0 < $REPO/buildfiles/dolfin_boost163.patch
       if [ "x$pkgver" == "x2016.1.0" ]; then
         git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
       fi
