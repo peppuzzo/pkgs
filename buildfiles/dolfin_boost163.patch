@@ -1,0 +1,11 @@
+--- cmake/modules/FindBoost.cmake.old	2017-01-16 15:01:02.000000000 +0100
++++ cmake/modules/FindBoost.cmake	2017-01-16 15:01:48.000000000 +0100
+@@ -742,7 +742,7 @@
+     set(_Boost_THREAD_DEPENDENCIES chrono system date_time atomic)
+     set(_Boost_WAVE_DEPENDENCIES filesystem system serialization thread chrono date_time atomic)
+     set(_Boost_WSERIALIZATION_DEPENDENCIES serialization)
+-  elseif(NOT Boost_VERSION VERSION_LESS 106200 AND Boost_VERSION VERSION_LESS 106300)
++  elseif(NOT Boost_VERSION VERSION_LESS 106200 AND Boost_VERSION VERSION_LESS 106400)
+     set(_Boost_CHRONO_DEPENDENCIES system)
+     set(_Boost_CONTEXT_DEPENDENCIES thread chrono system date_time)
+     set(_Boost_COROUTINE_DEPENDENCIES context system)
