@@ -7,6 +7,7 @@ unset SLEPC_DIR
 module load petsc/dev arpack-ng
 moduledeps+=("petsc/dev" "arpack-ng")
 PYTHON=python
+pkgmodule_default=no
 
 # common modules to all hosts
 module load hwloc openmpi hdf5 netcdf

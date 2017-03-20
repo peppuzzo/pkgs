@@ -13,6 +13,7 @@ unset PETSC_DIR
 export PETSC_ARCH=arch-linux2-c-opt
 PYTHON=python
 confextra=""
+pkgmodule_default=no
 
 # common modules to all hosts
 module load hwloc openmpi hdf5 netcdf
