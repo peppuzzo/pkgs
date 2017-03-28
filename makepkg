@@ -117,16 +117,20 @@ prepare()
 
 configure()
 {
-  # create a build directory and
-  # run the configure script
-  [[ -d $builddir ]] && rm -rf $builddir
-  mkdir $builddir
+  # check if the build directory is not the source directory
+  echo $tmpdir/$srcdir
+  echo $builddir
+  if [ "x${tmpdir}/${srcdir}" != "x${builddir}" ]; then
+    # create a build directory
+    [[ -d $builddir ]] && rm -rf $builddir
+    mkdir $builddir
+  fi
   pushd $builddir
   # check if cmake or autoconf
   if [[ ! -z ${USE_CMAKE+x} ]]; then
-    cmake -DCMAKE_INSTALL_PREFIX=$destdir $confopts ../
+    cmake -DCMAKE_INSTALL_PREFIX=$destdir $confopts $tmpdir/$srcdir
   else
-    ../configure --prefix=$destdir $confopts
+    $tmpdir/$srcdir/configure --prefix=$destdir $confopts
   fi
   popd
 }
