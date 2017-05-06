@@ -4,8 +4,14 @@ pkgver=dev
 pkgurl=git@bitbucket.org:slepc/slepc.git
 
 unset SLEPC_DIR
-module load petsc/dev arpack-ng
-moduledeps+=("petsc/dev" "arpack-ng")
+module load arpack-ng
+moduledeps+=("arpack-ng")
+# This when installation is not from slepc/x.y.z
+if [ -z ${_pkgver+x} ]; then
+  module load petsc/dev
+  moduledeps+=("petsc/dev")
+fi
+
 PYTHON=python
 pkgmodule_default=no
 

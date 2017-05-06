@@ -12,12 +12,17 @@ confextra=""
 export CASROOT
 
 if [[ ${HOSTNAME} == "mbpro" ]]; then
-  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
-  confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
-  confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
-  confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
+  #confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+  #confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
+  #confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
+  #confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
   export MAKE_NUMJOBS=5
 fi
+
+apply_patch()
+{
+  patch -Np1 < $REPO/buildfiles/gmsh_nochaco.patch
+}
 
 confopts=$(cat <<END_HEREDOC
 -D CMAKE_INSTALL_PREFIX:PATH=$destdir
@@ -27,7 +32,6 @@ confopts=$(cat <<END_HEREDOC
 -D GMSH_DOC:PATH=$destdir/doc
 -D GMSH_MAN:PATH=$destdir/man
 -D ENABLE_NATIVE_FILE_CHOOSER:BOOL=ON
--D ENABLE_BUILD_LIB:BOOL=ON
 -D ENABLE_BUILD_SHARED:BOOL=ON
 -D ENABLE_FLTK:BOOL=ON
 -D ENABLE_MPI:BOOL=ON

@@ -52,6 +52,7 @@ configure()
     --with-netcdf-dir=$NETCDF_DIR \
     --download-{metis,parmetis,suitesparse,superlu,scalapack} \
     --download-{scotch,ptscotch,mumps,hypre,superlu_dist} \
+    --download-{p4est,chaco,triangle,ctetgen} \
     ${confextra}
 }
 
@@ -91,6 +92,12 @@ post_package()
   makepkg_git git@bitbucket.org:petsc/petsc4py.git $tmpdir/petsc4py
   pushd $tmpdir/petsc4py
   PETSC_DIR=$destdir $PYTHON setup.py install --prefix=$destdir
+  popd
+  # h5py
+  makepkg_git https://github.com/h5py/h5py.git $tmpdir/h5py
+  pushd $tmpdir/h5py
+  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages \
+    $PYTHON setup.py install --prefix=$destdir
   popd
 }
 

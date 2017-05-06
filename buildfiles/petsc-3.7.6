@@ -9,6 +9,8 @@ mpi4pyver=2.0.0
 mpi4pyurl=https://bitbucket.org/mpi4py/mpi4py/downloads/mpi4py-${mpi4pyver}.tar.gz
 petsc4pyver=3.7.0
 petsc4pyurl=https://bitbucket.org/petsc/petsc4py/downloads/petsc4py-${petsc4pyver}.tar.gz
+h5pyver=2.7.0
+h5pyurl=https://github.com/h5py/h5py/archive/${h5pyver}.tar.gz
 
 pkgmodule_default=yes
 
@@ -25,6 +27,14 @@ post_package()
     PETSC_DIR=$destdir $PYTHON setup.py install --prefix=$destdir
     popd
   done
+
+  makepkg_download ${h5pyurl}
+  makepkg_untar $(basename ${h5pyurl})
+  pushd h5py-${h5pyver}
+  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages \
+    $PYTHON setup.py install --prefix=$destdir
+  popd
+
   popd
 }
 

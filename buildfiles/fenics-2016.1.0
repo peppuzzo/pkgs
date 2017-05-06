@@ -82,6 +82,11 @@ prepare()
       popd
     fi
   done
+  # target specific
+  if [[ ${HOSTNAME} == "mbpro" ]]; then
+    # this is not necessary anymore, use cmake one
+    rm ${tmpdir}/dolfin-${pkgver}/cmake/modules/FindBoost.cmake
+  fi
 }
 
 confopts=$(cat <<END_HEREDOC

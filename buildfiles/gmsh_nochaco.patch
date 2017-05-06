@@ -1,0 +1,11 @@
+--- gmsh-3.0.1-source/CMakeLists.txt	2017-05-06 22:37:41.000000000 +0200
++++ gmsh-3.0.1-source/CMakeLists.txt.orig	2017-05-06 22:37:17.000000000 +0200
+@@ -755,7 +755,7 @@
+   endif(ENABLE_METIS)
+ 
+   if(ENABLE_CHACO)
+-    #add_subdirectory(contrib/Chaco)
++    add_subdirectory(contrib/Chaco)
+     include_directories(contrib/Chaco/main)
+     set_config_option(HAVE_CHACO "Chaco")
+   endif(ENABLE_CHACO)
