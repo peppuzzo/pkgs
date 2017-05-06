@@ -9,6 +9,8 @@ module load opencascade slepc
 moduledeps+=("opencascade" "slepc")
 confextra=""
 
+export CASROOT
+
 if [[ ${HOSTNAME} == "mbpro" ]]; then
   confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
   confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
