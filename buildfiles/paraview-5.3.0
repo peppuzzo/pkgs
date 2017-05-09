@@ -7,8 +7,9 @@ export MAKE_NUMJOBS=11
 module load openmpi
 module load embree ospray
 moduledeps+=("openmpi" "embree" "ospray")
+set pkgmodule_skip_lib
 
-# NOTE not using system HDF5 becuse Xdmf does not support it properly
+# NOTE not using system HDF5 because Xdmf does not support it properly
 export PYTHON=/usr/bin/python2
 export CXX=mpic++
 export CC=mpicc

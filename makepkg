@@ -206,7 +206,7 @@ feedmodule()
       echo "prepend-path PATH \$${PKGDIR}/bin" >> $modulefile
     fi
     # Add libraries (only on Unix)
-    if [ "x$OSTYPE" = "xlinux-gnu" ]; then
+    if [ "x$OSTYPE" = "xlinux-gnu" -a -z "${pkgmodule_skip_lib+x}" ]; then
       if [ -d "${destdir}/lib" ]; then
         echo "prepend-path LD_LIBRARY_PATH \$${PKGDIR}/lib" >> $modulefile
       fi

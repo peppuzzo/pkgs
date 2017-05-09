@@ -31,10 +31,10 @@ $confextra
 END_HEREDOC
 )
 
-#apply_patch()
-#{
-#  patch -Np0 < $REPO/buildfiles/opencascade_vtk71.patch
-#}
+apply_patch()
+{
+  patch -Np0 < $REPO/buildfiles/opencascade_vtk71.patch
+}
 
 pkgmodule_extra=$(cat <<END_HEREDOC
 setenv OCC_DIR \$OPENCASCADE_DIR

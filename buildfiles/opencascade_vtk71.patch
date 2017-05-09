@@ -1,27 +1,5 @@
---- src/TKIVtkDraw/EXTERNLIB.orig	2016-09-22 08:57:41.308631725 +0200
-+++ src/TKIVtkDraw/EXTERNLIB	2016-09-26 06:48:14.476393388 +0200
-@@ -19,5 +19,5 @@
- vtkIOImage
- vtkImagingCore
- vtkInteractionStyle
--vtkRenderingOpenGL
--vtkRenderingFreeTypeOpenGL
-+vtkRenderingOpenGL2
-+vtkRenderingFreeType
---- src/TKIVtk/EXTERNLIB.orig	2016-09-22 08:57:53.148632469 +0200
-+++ src/TKIVtk/EXTERNLIB	2016-09-26 06:47:53.939725440 +0200
-@@ -12,8 +12,7 @@
- TKV3d
- vtkCommonCore
- vtkRenderingCore
--vtkRenderingOpenGL
-+vtkRenderingOpenGL2
- vtkRenderingFreeType
--vtkRenderingFreeTypeOpenGL
- vtkFiltersGeneral
- vtkInteractionStyle
---- src/IVtkVTK/IVtkVTK_ShapeData.cxx.orig	2016-09-22 08:43:48.995246427 +0200
-+++ src/IVtkVTK/IVtkVTK_ShapeData.cxx	2016-09-22 08:47:20.331926289 +0200
+--- src/IVtkVTK/IVtkVTK_ShapeData.cxx.orig	2017-05-08 14:57:04.522340278 +0200
++++ src/IVtkVTK/IVtkVTK_ShapeData.cxx	2017-05-08 14:58:11.409010703 +0200
 @@ -80,9 +80,9 @@
    vtkIdType aPointIdVTK = thePointId;
    myPolyData->InsertNextCell (VTK_VERTEX, 1, &aPointIdVTK);
@@ -55,10 +33,10 @@
      const vtkIdType aType = theMeshType;
 -    myMeshTypes->InsertNextTupleValue (&aType);
 +    myMeshTypes->InsertNextTypedTuple (&aType);
-     anIdList->Delete();
    }
  }
-@@ -144,7 +144,7 @@
+ 
+@@ -143,7 +143,7 @@
    vtkIdType aPoints[3] = { thePointId1, thePointId2, thePointId3 };
    myPolyData->InsertNextCell (VTK_TRIANGLE, 3, aPoints);
    const vtkIdType aShapeIDVTK = theShapeID;
@@ -68,9 +46,9 @@
 -  myMeshTypes->InsertNextTupleValue (&aType);
 +  myMeshTypes->InsertNextTypedTuple (&aType);
  }
---- src/IVtkDraw/IVtkDraw.cxx.orig	2016-10-03 10:32:12.386093911 +0200
-+++ src/IVtkDraw/IVtkDraw.cxx	2016-10-03 10:32:24.696094672 +0200
-@@ -86,6 +86,7 @@
+--- src/IVtkDraw/IVtkDraw.cxx.orig	2017-05-08 14:59:05.819013763 +0200
++++ src/IVtkDraw/IVtkDraw.cxx	2017-05-08 14:59:20.372347918 +0200
+@@ -85,6 +85,7 @@
  #include <IVtkDraw_HighlightAndSelectionPipeline.hxx>
  #include <IVtkDraw_Interactor.hxx>
  
