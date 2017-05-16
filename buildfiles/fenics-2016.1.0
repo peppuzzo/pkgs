@@ -32,13 +32,25 @@ elif [[ ${HOSTNAME} == "gollum" ]]; then
   export CXXFLAGS="-fext-numeric-literals"
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
   PYTHON=python
-  confextra="-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
+  confextra+=" -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
   confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
   confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
   confextra+=" -DCMAKE_INSTALL_NAME_DIR:PATH=$destdir/lib"
   DYN=dylib
 fi
 
+confopts=$(cat <<END_HEREDOC
+-D DOLFIN_USE_PYTHON3=OFF
+-D BUILD_SHARED_LIBS:BOOL=ON
+-D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
+-D DOLFIN_ENABLE_DOCS:BOOL=OFF
+-D DOLFIN_ENABLE_TESTING:BOOL=OFF
+-D PYTHON_EXECUTABLE:PATH=$(which $PYTHON)
+-D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN
+-D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7
+${confextra}
+END_HEREDOC
+)
 
 prepare()
 {
@@ -52,7 +64,9 @@ prepare()
     # patches
     if [[ "x${fenicspkg}" == "xdolfin" ]]; then
       patch -Np0 < $REPO/buildfiles/dolfin_vtk_version.patch
-      patch -Np0 < $REPO/buildfiles/dolfin_boost163.patch
+      if [ "x$pkgver" == "x2016.2.0" ]; then
+        patch -Np0 < $REPO/buildfiles/dolfin_boost163.patch
+      fi
       if [ "x$pkgver" == "x2016.1.0" ]; then
         git apply $REPO/buildfiles/dolfin_hdf5_clib.patch
       fi
@@ -61,9 +75,9 @@ prepare()
         patch -Np1 < $REPO/buildfiles/instant_python_exe.patch
       fi
     elif [[ "x${fenicspkg}" == "xmshr" ]]; then
-      if [ "x$pkgver" == "x2016.2.0" ]; then
+      #if [ "x$pkgver" == "x2016.2.0" ]; then
         patch -Np0 < $REPO/buildfiles/mshr_vtk_version.patch
-      fi
+      #fi
     fi
     popd
   done
@@ -88,17 +102,6 @@ prepare()
     rm ${tmpdir}/dolfin-${pkgver}/cmake/modules/FindBoost.cmake
   fi
 }
-
-confopts=$(cat <<END_HEREDOC
--D BUILD_SHARED_LIBS:BOOL=ON
--D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
--D DOLFIN_ENABLE_DOCS:BOOL=OFF
--D DOLFIN_ENABLE_TESTING:BOOL=OFF
--D PYTHON_EXECUTABLE:PATH=$(which $PYTHON)
--D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN
--D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7
-END_HEREDOC
-)
 
 # override, this would delete $destdir
 pre_package() { :; }
