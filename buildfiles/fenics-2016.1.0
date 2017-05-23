@@ -6,19 +6,17 @@ module load hdf5 openmpi petsc slepc vtk
 moduledeps+=("hdf5" "openmpi" "petsc" "slepc" "vtk" "gmsh")
 
 # necessary for python dependencies
-export PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages
 export PATH=$PATH:$destdir/bin
 export USE_CMAKE=1
 export MAKE_NUMJOBS=11
 export HDF5_ROOT=$HDF5_DIR
-export PYTHON=python
-
 PYTHON=python
+
 confextra=""
 DYN=so
 
 fenicspkgs=("ufl" "fiat" "instant" "ffc" "dolfin" "mshr")
-if [ "x${pkgver}" == "x2016.2.0" ]; then
+if [ "x${pkgver}" != "x2016.1.0" ]; then
   fenicspkgs+=("dijitso")
 fi
 
@@ -27,11 +25,20 @@ if [[ ${HOSTNAME} == "ics"* ]]; then
   module load cmake python/intel27
   moduledeps+=("cmake" "python/intel27")
 elif [[ ${HOSTNAME} == "gollum" ]]; then
-  # python is python2
-  PYTHON=python2
+  if [[ -d $USE_PY2 ]]; then
+    # python is python2
+    PYTHON=python2
+    apply_patch()
+    {
+      sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+          -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+          -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
+          -i $(find . -name '*.py')
+    }
+    confextra+=" -DDOLFIN_USE_PYTHON3=OFF"
+  fi
   export CXXFLAGS="-fext-numeric-literals"
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
-  PYTHON=python
   confextra+=" -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12"
   confextra+=" -DCMAKE_SKIP_INSTALL_RPATH:BOOL=OFF"
   confextra+=" -DCMAKE_SKIP_BUILD_RPATH:BOOL=OFF"
@@ -39,15 +46,23 @@ elif [[ ${HOSTNAME} == "mbpro" ]]; then
   DYN=dylib
 fi
 
+_pycmd='import sysconfig; print(sysconfig.get_config_var("INCLUDEPY"))'
+PYTHON_INC=$(echo -e $_pycmd | $PYTHON)
+_pycmd='import sysconfig,os; print(os.path.join(*sysconfig.get_config_vars("LIBDIR","LDLIBRARY")))'
+PYTHON_LIB=$(echo -e $_pycmd | $PYTHON)
+_pycmd="from distutils.sysconfig import get_python_lib;print(get_python_lib(False,False,\"$destdir\"));"
+PYTHON_SITE=$(echo -e $_pycmd | $PYTHON)
+
+export PYTHONPATH=$PYTHONPATH:$PYTHON_SITE
+
 confopts=$(cat <<END_HEREDOC
--D DOLFIN_USE_PYTHON3=OFF
 -D BUILD_SHARED_LIBS:BOOL=ON
 -D DOLFIN_ENABLE_TRILINOS:BOOL=OFF
 -D DOLFIN_ENABLE_DOCS:BOOL=OFF
 -D DOLFIN_ENABLE_TESTING:BOOL=OFF
 -D PYTHON_EXECUTABLE:PATH=$(which $PYTHON)
--D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN
--D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7
+-D PYTHON_LIBRARY:PATH=$PYTHON_LIB
+-D PYTHON_INCLUDE_DIR:PATH=$PYTHON_INC
 ${confextra}
 END_HEREDOC
 )
@@ -88,7 +103,7 @@ prepare()
   # remove old installation
   [[ -d $destdir ]] && rm -rfv $destdir
   # install dependencies
-  mkdir -pv $destdir/lib/python2.7/site-packages
+  mkdir -pv $PYTHON_SITE
   for fenicspkg in "dijitso" "ufl" "fiat" "instant" "ffc"; do
     if [ -d "$tmpdir/${fenicspkg}-${pkgver}" ]; then
       pushd $tmpdir/${fenicspkg}-${pkgver}
@@ -117,8 +132,8 @@ post_package()
   cmake \
     -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D PYTHON_EXECUTABLE:PATH=$(which $PYTHON) \
-    -D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN \
-    -D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7 \
+    -D PYTHON_LIBRARY:PATH=$PYTHON_LIB \
+    -D PYTHON_INCLUDE_DIR:PATH=$PYTHON_INC \
     ../
   make install
   popd
@@ -130,8 +145,8 @@ post_package()
   cmake \
     -DCMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D PYTHON_EXECUTABLE:PATH=$(which $PYTHON) \
-    -D PYTHON_LIBRARY:PATH=`$PYTHON-config --prefix`/lib/libpython2.7.$DYN \
-    -D PYTHON_INCLUDE_DIR:PATH=`$PYTHON-config --prefix`/include/python2.7 \
+    -D PYTHON_LIBRARY:PATH=$PYTHON_LIB \
+    -D PYTHON_INCLUDE_DIR:PATH=$PYTHON_INC \
     ../
   make install
   popd

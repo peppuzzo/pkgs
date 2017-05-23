@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 pkgname=arpack-ng
-pkgver=3.4.0
+pkgver=3.5.0
 pkgurl=https://github.com/opencollab/arpack-ng/archive/${pkgver}.tar.gz
 
 module load openmpi

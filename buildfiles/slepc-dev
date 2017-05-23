@@ -13,23 +13,27 @@ if [ -z ${_pkgver+x} ]; then
 fi
 
 PYTHON=python
+PYTHON2=python2
 pkgmodule_default=no
 
 # common modules to all hosts
 module load hwloc openmpi hdf5 netcdf
 moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
 if [[ ${HOSTNAME} == "gollum" ]]; then
-  # python is python2
-  PYTHON=python2
+  if [[ -d $USE_PY2 ]]; then
+    # python is python2
+    PYTHON=$PYTHON2
+  fi
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
   PYTHON=python
+  PYTHON2=python
 fi
 
 configure()
 {
   [ -d $destdir ] && rm -rfv $destdir
   pushd $tmpdir/$srcdir
-  $PYTHON ./configure \
+  $PYTHON2 ./configure \
     --prefix=$destdir \
     --download-blopex \
     --with-arpack=1 \

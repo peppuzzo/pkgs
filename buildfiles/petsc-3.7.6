@@ -31,7 +31,7 @@ post_package()
   makepkg_download ${h5pyurl}
   makepkg_untar $(basename ${h5pyurl})
   pushd h5py-${h5pyver}
-  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages \
+  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python$pythonver/site-packages \
     $PYTHON setup.py install --prefix=$destdir
   popd
 

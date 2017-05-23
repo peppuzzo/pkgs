@@ -1,7 +1,7 @@
 # vim: set ft=sh:
 pkgurl=git@bitbucket.org:petsc/petsc.git
 
-# NOTE: this package provides also petsc4py and mpi4py
+# NOTE: this package provides also petsc4py, mpi4py and h5py
 
 # PETSc has its automatic way to deal with multiple versions, compiled with
 # and without debug symbols, or with different compilers.
@@ -12,6 +12,7 @@ pkgurl=git@bitbucket.org:petsc/petsc.git
 unset PETSC_DIR
 export PETSC_ARCH=arch-linux2-c-opt
 PYTHON=python
+PYTHON2=python2
 confextra=""
 pkgmodule_default=no
 
@@ -21,15 +22,20 @@ moduledeps+=("hwloc" "openmpi" "hdf5" "netcdf")
 if [[ ${HOSTNAME} == "ics"* ]]; then
   # cmake is not available on ICS-HPC, and system python is old
   module load cmake python/intel27
+  PYTHON2=$PYTHON
   moduledeps+=("cmake" "python/intel27")
 elif [[ ${HOSTNAME} == "gollum" ]]; then
-  # python is python2
-  PYTHON=python2
+  if [[ -d $USE_PY2 ]]; then
+    # python is python2
+    PYTHON=$PYTHON2
+  fi
   # flex 2.6.3 isn't working, use our own until 2.6.4 is out
   #module load flex
 elif [[ ${HOSTNAME} == "mbpro" ]]; then
-  PYTHON=python
+  PYTHON2=$PYTHON
 fi
+
+pythonver=`$PYTHON -c 'import sysconfig; print(sysconfig.get_python_version())'`
 
 configure()
 {
@@ -37,7 +43,8 @@ configure()
   # dependencies there during config.
   [ -d $destdir ] && rm -rfv $destdir
   pushd $tmpdir/$srcdir
-  $PYTHON ./configure \
+  # PETSc config does not support python3
+  $PYTHON2 ./configure \
     --prefix=$destdir \
     COPTFLAGS="-O2 -march=native" \
     CXXOPTFLAGS="-O2 -march=native" \
@@ -96,7 +103,7 @@ post_package()
   # h5py
   makepkg_git https://github.com/h5py/h5py.git $tmpdir/h5py
   pushd $tmpdir/h5py
-  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python2.7/site-packages \
+  CC="mpicc" HDF5_MPI="ON" PYTHONPATH=$PYTHONPATH:$destdir/lib/python$pythonver/site-packages \
     $PYTHON setup.py install --prefix=$destdir
   popd
 }
